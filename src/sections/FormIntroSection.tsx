@@ -4,6 +4,8 @@ import { SacredRings, GlowOrb } from '@/components/SacredGeometry';
 import { ChevronLeft, User, Calendar } from 'lucide-react';
 
 interface FormIntroSectionProps {
+  initialName?: string;
+  initialBirthDate?: string;
   onSubmit: (name: string, birthDate: string) => void;
   onBack: () => void;
 }
@@ -16,9 +18,9 @@ function capitalizeFirstLetter(value: string) {
   return value.charAt(0).toUpperCase() + value.slice(1);
 }
 
-export function FormIntroSection({ onSubmit, onBack }: FormIntroSectionProps) {
-  const [name, setName] = useState('');
-  const [birthDate, setBirthDate] = useState('');
+export function FormIntroSection({ initialName = '', initialBirthDate = '', onSubmit, onBack }: FormIntroSectionProps) {
+  const [name, setName] = useState(initialName);
+  const [birthDate, setBirthDate] = useState(initialBirthDate);
   const [errors, setErrors] = useState<{ name?: string; birthDate?: string }>({});
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -101,6 +103,7 @@ export function FormIntroSection({ onSubmit, onBack }: FormIntroSectionProps) {
                 <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-secondary-custom/50" />
                 <input
                   type="text"
+                  autoFocus
                   value={name}
                   onChange={(e) => {
                     setName(capitalizeFirstLetter(e.target.value));

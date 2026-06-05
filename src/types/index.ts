@@ -189,6 +189,7 @@ export interface SacredArchetype {
   description: string;
   narrative: string;
   dietStyle: string;
+  introThemes?: string[];
   signatureThemes: string[];
   mealRhythm: string;
   macros: {

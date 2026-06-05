@@ -216,7 +216,7 @@ export const doshaQuizQuestions: QuizQuestion[] = [
     id: 1,
     category: 'Body & Build',
     question: 'Which best describes your natural body frame and skin?',
-    info: 'Ayurveda reads the body as a climate map, with lightness, heat, and steadiness each leaving their trace.',
+    info: 'Ayurveda reads the body as a climate map.',
     options: [
       { text: 'Thin, light build; dry skin; difficulty gaining weight', emoji: '🌬️', scores: { vata: 3, pitta: 0, kapha: 0 } },
       { text: 'Medium build; warm skin; can gain or lose weight easily', emoji: '🔥', scores: { vata: 0, pitta: 3, kapha: 0 } },

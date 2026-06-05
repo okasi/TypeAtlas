@@ -7,6 +7,8 @@ import { useArrowOptionNavigation } from '@/hooks/use-arrow-option-navigation';
 import type { UserProfile } from '@/types';
 
 type AtlasSignals = Pick<UserProfile, 'enneagram' | 'hogwartsHouse' | 'loveLanguage' | 'chronotype'>;
+type AtlasSignalKey = keyof AtlasSignals;
+type AtlasSignalSelection = AtlasSignals[AtlasSignalKey] | 'skip';
 
 const stepCardVariants = {
   enter: (direction: number) => ({
@@ -25,6 +27,13 @@ const stepCardVariants = {
 
 interface AtlasSignalsSectionProps {
   userProfile: Partial<UserProfile>;
+  initialStep?: number;
+  initialSignalSelections?: Partial<Record<AtlasSignalKey, AtlasSignalSelection>>;
+  onStateChange?: (details: {
+    currentStep: number;
+    signals: AtlasSignals;
+    signalSelections: Partial<Record<AtlasSignalKey, AtlasSignalSelection>>;
+  }) => void;
   onComplete: (signals: AtlasSignals) => void;
   onBack: () => void;
   onProgressChange?: (details: { progress: number; label: string }) => void;
@@ -34,31 +43,52 @@ const AUTO_ADVANCE_DELAY = 377;
 
 export function AtlasSignalsSection({
   userProfile,
+  initialStep = 0,
+  initialSignalSelections = {},
+  onStateChange,
   onComplete,
   onBack,
   onProgressChange,
 }: AtlasSignalsSectionProps) {
-  const [currentStep, setCurrentStep] = useState(0);
+  const totalSteps = atlasSignalQuestions.length;
+  const [currentStep, setCurrentStep] = useState(() => Math.min(Math.max(initialStep, 0), totalSteps - 1));
   const [direction, setDirection] = useState<1 | -1>(1);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const selectionLockRef = useRef(false);
+  const [signalSelections, setSignalSelections] =
+    useState<Partial<Record<AtlasSignalKey, AtlasSignalSelection>>>(initialSignalSelections);
   const [answeredQuestions, setAnsweredQuestions] = useState<Set<keyof AtlasSignals>>(
     () =>
       new Set(
         (['enneagram', 'hogwartsHouse', 'loveLanguage', 'chronotype'] as Array<keyof AtlasSignals>).filter(
-          (key) => Boolean(userProfile[key]),
+          (key) => Boolean(userProfile[key]) || Boolean(initialSignalSelections[key]),
         ),
       ),
   );
+  const initialEnneagram = initialSignalSelections.enneagram;
+  const initialHogwartsHouse = initialSignalSelections.hogwartsHouse;
+  const initialLoveLanguage = initialSignalSelections.loveLanguage;
+  const initialChronotype = initialSignalSelections.chronotype;
   const [signals, setSignals] = useState<AtlasSignals>({
-    enneagram: userProfile.enneagram,
-    hogwartsHouse: userProfile.hogwartsHouse,
-    loveLanguage: userProfile.loveLanguage,
-    chronotype: userProfile.chronotype,
+    enneagram:
+      initialEnneagram === 'skip'
+        ? undefined
+        : (initialEnneagram as AtlasSignals['enneagram'] | undefined) ?? userProfile.enneagram,
+    hogwartsHouse:
+      initialHogwartsHouse === 'skip'
+        ? undefined
+        : (initialHogwartsHouse as AtlasSignals['hogwartsHouse'] | undefined) ?? userProfile.hogwartsHouse,
+    loveLanguage:
+      initialLoveLanguage === 'skip'
+        ? undefined
+        : (initialLoveLanguage as AtlasSignals['loveLanguage'] | undefined) ?? userProfile.loveLanguage,
+    chronotype:
+      initialChronotype === 'skip'
+        ? undefined
+        : (initialChronotype as AtlasSignals['chronotype'] | undefined) ?? userProfile.chronotype,
   });
 
   const currentQuestion = atlasSignalQuestions[currentStep];
-  const totalSteps = atlasSignalQuestions.length;
   const progress = ((currentStep + 1) / totalSteps) * 100;
   const selectedValue = signals[currentQuestion.id];
   const hasAnsweredCurrent = answeredQuestions.has(currentQuestion.id);
@@ -83,6 +113,14 @@ export function AtlasSignalsSection({
     });
   }, [currentQuestion.category, currentStep, onProgressChange, progress, totalSteps]);
 
+  useEffect(() => {
+    onStateChange?.({
+      currentStep,
+      signals,
+      signalSelections,
+    });
+  }, [currentStep, onStateChange, signalSelections, signals]);
+
   function handleSelect(value?: string) {
     if (isTransitioning || selectionLockRef.current) {
       return;
@@ -94,8 +132,13 @@ export function AtlasSignalsSection({
       ...signals,
       [currentQuestion.id]: value,
     } as AtlasSignals;
+    const nextSignalSelections = {
+      ...signalSelections,
+      [currentQuestion.id]: value ?? 'skip',
+    } as Partial<Record<AtlasSignalKey, AtlasSignalSelection>>;
 
     setSignals(nextSignals);
+    setSignalSelections(nextSignalSelections);
     setAnsweredQuestions((prev) => {
       const next = new Set(prev);
       next.add(currentQuestion.id);
@@ -225,16 +268,6 @@ export function AtlasSignalsSection({
           </motion.div>
         </AnimatePresence>
 
-        <div className="flex justify-start mt-6">
-          <button
-            onClick={handleBack}
-            disabled={isTransitioning}
-            className="flex items-center gap-2 px-6 py-3 rounded-full border border-white/10 text-secondary-custom hover:text-foreground hover:border-white/20 transition-colors disabled:opacity-50"
-          >
-            <ChevronLeft className="w-4 h-4" />
-            <span className="font-mono text-sm uppercase">Back</span>
-          </button>
-        </div>
       </div>
     </section>
   );

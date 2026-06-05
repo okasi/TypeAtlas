@@ -1,11 +1,27 @@
 import { motion } from 'framer-motion';
 import { RotatingGeometry, GlowOrb } from '@/components/SacredGeometry';
+import { ChevronLeft } from 'lucide-react';
 
-export function LoadingSection() {
+interface LoadingSectionProps {
+  onBack: () => void;
+}
+
+export function LoadingSection({ onBack }: LoadingSectionProps) {
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
       {/* Background */}
       <div className="absolute inset-0 bg-gradient-to-b from-[#0B0D10] via-[#0F1218] to-[#0B0D10]" />
+
+      {/* Back button */}
+      <motion.button
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        onClick={onBack}
+        className="absolute top-8 left-8 flex items-center gap-2 text-secondary-custom hover:text-gold transition-colors z-20"
+      >
+        <ChevronLeft className="w-5 h-5" />
+        <span className="font-mono text-sm uppercase tracking-wider">Back</span>
+      </motion.button>
       
       {/* Central glow */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">

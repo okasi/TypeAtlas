@@ -87,10 +87,22 @@ const doshaThemeBanks: Record<DoshaType, string[]> = {
   kapha: ['Light spiced lift', 'Energizing clean edges', 'Dry vibrant contrast']
 };
 
+const introDoshaThemeBanks: Record<DoshaType, string[]> = {
+  vata: ['Grounded steadiness', 'Calm sensory grounding', 'Soft inner steadiness'],
+  pitta: ['Composed clarity', 'Measured intensity', 'Bright emotional balance'],
+  kapha: ['Light activation', 'Clear momentum', 'Awake steadiness']
+};
+
 const accentThemeBanks: Record<DoshaType, string[]> = {
   vata: ['Curious variety', 'Airy movement', 'Flexible textures'],
   pitta: ['Cooling restraint', 'Bright clean finish', 'Fresh mineral lift'],
   kapha: ['Spiced activation', 'Lighter portions', 'More crunch and lift']
+};
+
+const introAccentThemeBanks: Record<DoshaType, string[]> = {
+  vata: ['Curious flexibility', 'Easy movement', 'Adaptive pacing'],
+  pitta: ['Fresh perspective', 'Clean mental space', 'Balanced restraint'],
+  kapha: ['Energized lift', 'Crisp momentum', 'Responsive lightness']
 };
 
 const elementThemeBanks = {
@@ -100,9 +112,21 @@ const elementThemeBanks = {
   water: ['Brothy soothing depth', 'Silky mineral freshness', 'Comforting fluid textures']
 } as const;
 
+const introElementThemeBanks = {
+  fire: ['Bold expression', 'Solar confidence', 'Celebratory energy'],
+  earth: ['Rooted reliability', 'Patient depth', 'Slow-built trust'],
+  air: ['Lively curiosity', 'Layered perspective', 'Quick adaptability'],
+  water: ['Reflective depth', 'Fluid calm', 'Emotional spaciousness']
+} as const;
+
 const structureThemeBanks = {
   J: ['Structured meal rhythm', 'Planned weekly staples', 'Consistent anchor meals'],
   P: ['Flexible appetite pacing', 'Open-ended meal flow', 'Room for instinct and curiosity']
+} as const;
+
+const introStructureThemeBanks = {
+  J: ['Structured daily rhythm', 'Planned stability', 'Consistent anchors'],
+  P: ['Flexible daily flow', 'Open-ended pacing', 'Room for instinct']
 } as const;
 
 const decisionThemeBanks = {
@@ -110,9 +134,19 @@ const decisionThemeBanks = {
   F: ['Mood-aware nourishment', 'Comfort with meaning', 'Emotionally resonant meals']
 } as const;
 
+const introDecisionThemeBanks = {
+  T: ['Strategic discernment', 'Functional clarity', 'Performance-minded focus'],
+  F: ['Emotional resonance', 'Meaningful comfort', 'Mood-aware intuition']
+} as const;
+
 const socialThemeBanks = {
   I: ['Quiet ritual focus', 'Low-noise nourishment', 'Protected solo meal time'],
   E: ['Shared table energy', 'Social meal moments', 'Conversation-friendly plates']
+} as const;
+
+const introSocialThemeBanks = {
+  I: ['Quiet ritual focus', 'Low-noise recharge', 'Protected solo time'],
+  E: ['Shared energy', 'Social momentum', 'Conversation-friendly presence']
 } as const;
 
 const bloodThemeBanks: Record<BloodType, string[]> = {
@@ -120,6 +154,13 @@ const bloodThemeBanks: Record<BloodType, string[]> = {
   B: ['Wide-spectrum variety', 'Creative menu freedom', 'Balanced omnivore energy'],
   AB: ['Balanced mixed plates', 'Adaptive smaller portions', 'Dual-source harmony'],
   O: ['Protein-led stamina', 'Bold mineral density', 'Steady athletic recovery']
+};
+
+const introBloodThemeBanks: Record<BloodType, string[]> = {
+  A: ['Calm focus', 'Gentle steadiness', 'Ordered restoration'],
+  B: ['Creative range', 'Adaptive freedom', 'Balanced range'],
+  AB: ['Integrated balance', 'Adaptive nuance', 'Dual-pattern harmony'],
+  O: ['Driven stamina', 'Bold resilience', 'Steady recovery']
 };
 
 const chineseElementMacros = {
@@ -384,6 +425,26 @@ function generateSignatureThemes(profile: UserProfile): string[] {
   return uniqueStrings(themes).slice(0, 5);
 }
 
+function generateIntroThemes(profile: UserProfile): string[] {
+  const seed = getProfileSeed(profile, 'intro-themes');
+  const { primary, secondary } = getDoshaBlend(profile);
+  const zodiacInfo = westernZodiacData[profile.westernZodiac];
+  const themes = [
+    pickDeterministic(introDoshaThemeBanks[primary], seed, 'base-theme'),
+    pickDeterministic(introAccentThemeBanks[secondary], seed, 'accent-theme'),
+    pickDeterministic(introElementThemeBanks[zodiacInfo.element], seed, 'element-theme'),
+    pickDeterministic(introStructureThemeBanks[profile.mbti[3] as keyof typeof introStructureThemeBanks], seed, 'structure-theme'),
+    pickDeterministic(introDecisionThemeBanks[profile.mbti[2] as keyof typeof introDecisionThemeBanks], seed, 'decision-theme'),
+    pickDeterministic(introSocialThemeBanks[profile.mbti[0] as keyof typeof introSocialThemeBanks], seed, 'social-theme')
+  ];
+
+  if (profile.bloodType) {
+    themes.push(pickDeterministic(introBloodThemeBanks[profile.bloodType], seed, 'blood-theme'));
+  }
+
+  return uniqueStrings(themes).slice(0, 5);
+}
+
 function calculateMacros(profile: UserProfile): { protein: number; carbs: number; fats: number; fiber: number; hydration: string } {
   const blend = getDoshaBlend(profile);
   const doshaMacros = doshaData[blend.primary].macros;
@@ -553,14 +614,13 @@ function generateMealRhythm(profile: UserProfile): string {
   return `${primaryRhythm} ${structureRhythm} ${accentRhythm} ${socialRhythm}`;
 }
 
-function generateDietStyle(profile: UserProfile, signatureThemes: string[], ingredients: string[]): string {
+function generateDietStyle(profile: UserProfile, introThemes: string[]): string {
   const seed = getProfileSeed(profile, 'diet-style');
-  const featuredIngredients = ingredients.slice(0, 3).join(', ');
-  const themes = signatureThemes.slice(0, 3).map(theme => theme.toLowerCase());
+  const themes = introThemes.slice(0, 3).map(theme => theme.toLowerCase());
   const templates = [
-    `Think ${themes[0]}, ${themes[1]}, and ${themes[2]}. Plates built around ${featuredIngredients} will feel more natural to you than any generic meal plan.`,
-    `Your best meals lean into ${themes[0]} with a layer of ${themes[1]}. Let ${featuredIngredients} do the heavy lifting while ${themes[2]} keeps the plan alive.`,
-    `You respond best to ${themes[0]}, backed by ${themes[1]} and ${themes[2]}. Make ${featuredIngredients} your recurring anchors and variety will feel intentional instead of random.`
+    `Think ${themes[0]}, ${themes[1]}, and ${themes[2]} first. Your recommendations work best when they serve that broader pattern instead of leading with specifics.`,
+    `Your profile reads strongest through ${themes[0]}, supported by ${themes[1]} and ${themes[2]}. Let those signals guide rhythm, energy, and sensory preference before the practical details begin.`,
+    `You respond best when ${themes[0]} is backed by ${themes[1]} and ${themes[2]}. Start with that orientation, then use the guidance below as its translation.`
   ];
 
   return pickDeterministic(templates, seed, 'diet-style-template');
@@ -644,6 +704,7 @@ function generateInsight(profile: UserProfile, ingredients: string[], signatureT
 
 export function generateSacredArchetype(profile: UserProfile): SacredArchetype {
   const signatureThemes = generateSignatureThemes(profile);
+  const introThemes = generateIntroThemes(profile);
   const ingredientsToPrioritize = generateIngredientsToPrioritize(profile);
   const mealRhythm = generateMealRhythm(profile);
   const narrative = generateNarrative(profile, ingredientsToPrioritize, mealRhythm, signatureThemes);
@@ -653,7 +714,8 @@ export function generateSacredArchetype(profile: UserProfile): SacredArchetype {
     title: `${profile.name}'s TypeAtlas Profile`,
     description: narrative,
     narrative,
-    dietStyle: generateDietStyle(profile, signatureThemes, ingredientsToPrioritize),
+    dietStyle: generateDietStyle(profile, introThemes),
+    introThemes,
     signatureThemes,
     mealRhythm,
     macros: calculateMacros(profile),

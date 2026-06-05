@@ -1,16 +1,17 @@
 import { motion } from 'framer-motion';
 import { SacredRings, GlowOrb } from '@/components/SacredGeometry';
 import type { SacredArchetype } from '@/types';
-import { Download, Share2, RotateCcw, Sparkles, Heart } from 'lucide-react';
+import { ChevronLeft, Download, Share2, RotateCcw, Sparkles, Heart } from 'lucide-react';
 
 interface ClosingSectionProps {
   result: SacredArchetype;
+  onBack: () => void;
   onRestart: () => void;
   onShare: () => void;
   onDownloadPDF: () => void;
 }
 
-export function ClosingSection({ result, onRestart, onShare, onDownloadPDF }: ClosingSectionProps) {
+export function ClosingSection({ result, onBack, onRestart, onShare, onDownloadPDF }: ClosingSectionProps) {
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden py-20">
       {/* Background */}
@@ -25,6 +26,17 @@ export function ClosingSection({ result, onRestart, onShare, onDownloadPDF }: Cl
       <div className="absolute inset-0 flex items-center justify-center opacity-20">
         <SacredRings size={600} />
       </div>
+
+      {/* Back button */}
+      <motion.button
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        onClick={onBack}
+        className="absolute top-8 left-8 flex items-center gap-2 text-secondary-custom hover:text-gold transition-colors z-20"
+      >
+        <ChevronLeft className="w-5 h-5" />
+        <span className="font-mono text-sm uppercase tracking-wider">Back</span>
+      </motion.button>
       
       {/* Main content */}
       <div className="relative z-10 w-full max-w-2xl mx-4">

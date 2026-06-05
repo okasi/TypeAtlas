@@ -21,9 +21,41 @@ export function useArrowOptionNavigation({
   selectedIndex,
 }: UseArrowOptionNavigationArgs) {
   const optionRefs = useRef<Array<HTMLButtonElement | null>>([]);
+  const pendingAutoFocusRef = useRef(false);
+  const focusIndex = selectedIndex >= 0 ? selectedIndex : 0;
+
+  const focusOption = useCallback((index: number) => {
+    const option = optionRefs.current[index];
+
+    if (!option) {
+      return false;
+    }
+
+    option.focus();
+    return document.activeElement === option;
+  }, []);
+
   const setOptionRef = useCallback((index: number, node: HTMLButtonElement | null) => {
     optionRefs.current[index] = node;
-  }, []);
+
+    if (!node || !pendingAutoFocusRef.current) {
+      return;
+    }
+
+    if (!enabled || index !== focusIndex) {
+      return;
+    }
+
+    window.requestAnimationFrame(() => {
+      if (
+        pendingAutoFocusRef.current &&
+        optionRefs.current[focusIndex] === node &&
+        focusOption(focusIndex)
+      ) {
+        pendingAutoFocusRef.current = false;
+      }
+    });
+  }, [enabled, focusIndex, focusOption]);
 
   useEffect(() => {
     optionRefs.current = optionRefs.current.slice(0, optionCount);
@@ -31,16 +63,19 @@ export function useArrowOptionNavigation({
 
   useEffect(() => {
     if (!enabled || optionCount === 0) {
+      pendingAutoFocusRef.current = false;
       return;
     }
 
-    const focusIndex = selectedIndex >= 0 ? selectedIndex : 0;
+    pendingAutoFocusRef.current = true;
     const frame = window.requestAnimationFrame(() => {
-      optionRefs.current[focusIndex]?.focus();
+      if (focusOption(focusIndex)) {
+        pendingAutoFocusRef.current = false;
+      }
     });
 
     return () => window.cancelAnimationFrame(frame);
-  }, [enabled, optionCount, selectedIndex]);
+  }, [enabled, focusIndex, focusOption, optionCount]);
 
   useEffect(() => {
     if (!enabled || optionCount === 0) {

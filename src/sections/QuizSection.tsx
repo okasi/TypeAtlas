@@ -30,6 +30,14 @@ interface QuizSectionProps {
     birthDate: string;
     bloodType: BloodType;
   }>;
+  initialAnswers?: number[];
+  initialStep?: number;
+  initialBloodTypeSelection?: BloodTypeSelection | null;
+  onStateChange?: (details: {
+    answers: number[];
+    currentStep: number;
+    bloodTypeSelection: BloodTypeSelection | null;
+  }) => void;
   onComplete: (answers: number[], bloodType?: BloodType) => void;
   onBack: () => void;
   onProgressChange?: (details: { progress: number; label: string }) => void;
@@ -37,16 +45,28 @@ interface QuizSectionProps {
 
 const AUTO_ADVANCE_DELAY = 377; // milliseconds
 
-export function QuizSection({ type, userProfile, onComplete, onBack, onProgressChange }: QuizSectionProps) {
-  const [currentStep, setCurrentStep] = useState(0);
+export function QuizSection({
+  type,
+  userProfile,
+  initialAnswers = [],
+  initialStep = 0,
+  initialBloodTypeSelection,
+  onStateChange,
+  onComplete,
+  onBack,
+  onProgressChange,
+}: QuizSectionProps) {
+  const questions = type === 'mbti' ? mbtiQuizQuestions : doshaQuizQuestions;
+  const totalSteps = type === 'mbti' ? questions.length + 1 : questions.length; // +1 for blood type selection in MBTI
+  const [currentStep, setCurrentStep] = useState(() => Math.min(Math.max(initialStep, 0), totalSteps - 1));
   const [direction, setDirection] = useState<1 | -1>(1);
-  const [answers, setAnswers] = useState<number[]>([]);
-  const [selectedBloodType, setSelectedBloodType] = useState<BloodTypeSelection | null>(userProfile.bloodType ?? null);
+  const [answers, setAnswers] = useState<number[]>(initialAnswers);
+  const [selectedBloodType, setSelectedBloodType] = useState<BloodTypeSelection | null>(
+    initialBloodTypeSelection ?? userProfile.bloodType ?? null,
+  );
   const [isTransitioning, setIsTransitioning] = useState(false);
   const selectionLockRef = useRef(false);
   
-  const questions = type === 'mbti' ? mbtiQuizQuestions : doshaQuizQuestions;
-  const totalSteps = type === 'mbti' ? questions.length + 1 : questions.length; // +1 for blood type selection in MBTI
   const isBloodTypeStep = type === 'mbti' && currentStep === 0;
   const questionIndex = type === 'mbti' ? currentStep - 1 : currentStep;
   const currentQuestion = questions[questionIndex];
@@ -86,6 +106,14 @@ export function QuizSection({ type, userProfile, onComplete, onBack, onProgressC
       label: `${label} (${stepNumber}/${totalSteps})`,
     });
   }, [currentStep, isBloodTypeStep, onProgressChange, progress, questionIndex, questions.length, totalSteps, type]);
+
+  useEffect(() => {
+    onStateChange?.({
+      answers,
+      currentStep,
+      bloodTypeSelection: selectedBloodType,
+    });
+  }, [answers, currentStep, onStateChange, selectedBloodType]);
 
   function handleBloodTypeSelect(bloodType: BloodTypeSelection) {
     if (isTransitioning || selectionLockRef.current) return;
@@ -313,17 +341,6 @@ export function QuizSection({ type, userProfile, onComplete, onBack, onProgressC
           )}
         </AnimatePresence>
         
-        {/* Navigation - Back button only */}
-        <div className="flex justify-start mt-6">
-          <button
-            onClick={handleBack}
-            disabled={isTransitioning}
-            className="flex items-center gap-2 px-6 py-3 rounded-full border border-white/10 text-secondary-custom hover:text-foreground hover:border-white/20 transition-colors disabled:opacity-50"
-          >
-            <ChevronLeft className="w-4 h-4" />
-            <span className="font-mono text-sm uppercase">Back</span>
-          </button>
-        </div>
       </div>
     </section>
   );

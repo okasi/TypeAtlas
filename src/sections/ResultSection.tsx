@@ -23,7 +23,7 @@ import {
   koreanBloodTypePersonality,
   bloodTypeData,
 } from '@/data';
-import { Sparkles, ChevronRight, Leaf, Flame, Droplets, Wind, Mountain } from 'lucide-react';
+import { Sparkles, ChevronLeft, ChevronRight, Leaf, Flame, Droplets, Wind, Mountain, AlertTriangle, Star } from 'lucide-react';
 
 const cardBadgeClassName =
   'flex h-11 w-11 items-center justify-center rounded-full border border-white/10 bg-white/5 text-2xl leading-none shadow-[0_0_24px_rgba(243,184,85,0.08)]';
@@ -100,10 +100,12 @@ function getMbtiSymbol(mbti: MBTIType) {
 interface ResultSectionProps {
   result: SacredArchetype;
   userProfile: UserProfile;
-  onViewMealPlan: () => void;
+  onViewClosing: () => void;
+  onBack: () => void;
 }
 
-export function ResultSection({ result, userProfile, onViewMealPlan }: ResultSectionProps) {
+export function ResultSection({ result, userProfile, onViewClosing, onBack }: ResultSectionProps) {
+  const introThemes = result.introThemes?.length ? result.introThemes : result.signatureThemes;
   const { westernZodiac, chineseZodiac, mbti, bloodType, enneagram, hogwartsHouse, loveLanguage, chronotype, birthstone } = userProfile;
   const bloodTypeInfo = bloodType ? bloodTypeData[bloodType] : null;
   const bloodTypePersonality = bloodType ? koreanBloodTypePersonality[bloodType] : null;
@@ -133,6 +135,17 @@ export function ResultSection({ result, userProfile, onViewMealPlan }: ResultSec
       <div className="absolute inset-0 flex items-center justify-center opacity-20">
         <SacredRings size={600} />
       </div>
+
+      {/* Back button */}
+      <motion.button
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        onClick={onBack}
+        className="absolute top-8 left-8 flex items-center gap-2 text-secondary-custom hover:text-gold transition-colors z-20"
+      >
+        <ChevronLeft className="w-5 h-5" />
+        <span className="font-mono text-sm uppercase tracking-wider">Back</span>
+      </motion.button>
       
       {/* Main content */}
       <div className="relative z-10 w-full max-w-4xl mx-4 py-12">
@@ -160,7 +173,7 @@ export function ResultSection({ result, userProfile, onViewMealPlan }: ResultSec
           </p>
 
           <div className="flex flex-wrap items-center justify-center gap-2 max-w-3xl mx-auto mt-5">
-            {result.signatureThemes.map((theme) => (
+            {introThemes.map((theme) => (
               <span
                 key={theme}
                 className="px-3 py-1.5 rounded-full border border-gold/25 bg-gold/10 text-xs uppercase tracking-[0.14em] text-gold"
@@ -479,19 +492,86 @@ export function ResultSection({ result, userProfile, onViewMealPlan }: ResultSec
           </div>
         </motion.div>
         
-        {/* CTA */}
+        {/* Suggested ingredients */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.65 }}
+          className="glass-card p-6 md:p-8 mb-10"
+        >
+          <div className="grid gap-8 md:grid-cols-2">
+            <div>
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 rounded-full bg-green-500/20 flex items-center justify-center">
+                  <Leaf className="w-5 h-5 text-green-400" />
+                </div>
+                <h3 className="font-heading text-xl text-foreground">Suggested Ingredients</h3>
+              </div>
+
+              <div className="flex flex-wrap gap-2">
+                {result.ingredientsToPrioritize.slice(0, 12).map((ingredient) => (
+                  <span
+                    key={ingredient}
+                    className="px-3 py-1.5 rounded-full text-xs bg-green-500/10 text-green-300 border border-green-500/30"
+                  >
+                    {ingredient}
+                  </span>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 rounded-full bg-red-500/20 flex items-center justify-center">
+                  <AlertTriangle className="w-5 h-5 text-red-400" />
+                </div>
+                <h3 className="font-heading text-xl text-foreground">Limit or Avoid</h3>
+              </div>
+
+              <div className="flex flex-wrap gap-2">
+                {result.foodsToAvoid.slice(0, 8).map((food) => (
+                  <span
+                    key={food}
+                    className="px-3 py-1.5 rounded-full text-xs bg-red-500/10 text-red-300 border border-red-500/30"
+                  >
+                    {food}
+                  </span>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-7 border-t border-white/10 pt-6">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-full bg-gold/20 flex items-center justify-center">
+                <Star className="w-5 h-5 text-gold" />
+              </div>
+              <h3 className="font-heading text-xl text-foreground">Simple Rituals</h3>
+            </div>
+
+            <ul className="grid gap-3 md:grid-cols-2">
+              {result.rituals.slice(0, 4).map((ritual) => (
+                <li key={ritual} className="flex items-start gap-3 text-sm text-secondary-custom">
+                  <span className="mt-1 h-1.5 w-1.5 rounded-full bg-gold flex-shrink-0" />
+                  <span>{ritual}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </motion.div>
+
+        {/* CTA */}
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, delay: 0.75 }}
           className="text-center"
         >
           <button
-            onClick={onViewMealPlan}
+            onClick={onViewClosing}
             className="btn-gold-filled inline-flex items-center gap-3"
           >
-            <Leaf className="w-5 h-5" />
-            <span>View Suggested Ingredients</span>
+            <span>Continue Your Journey</span>
             <ChevronRight className="w-5 h-5" />
           </button>
         </motion.div>
