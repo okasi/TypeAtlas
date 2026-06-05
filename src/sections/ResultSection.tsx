@@ -33,10 +33,9 @@ import {
   Mountain,
   AlertTriangle,
   Star,
-  Download,
+  Printer,
   Share2,
   RotateCcw,
-  Heart,
 } from 'lucide-react';
 
 const cardBadgeClassName =
@@ -117,7 +116,7 @@ interface ResultSectionProps {
   onBack: () => void;
   onRestart: () => void;
   onShare: () => void;
-  onDownloadPDF: () => void;
+  onPrint: () => void;
 }
 
 export function ResultSection({
@@ -126,9 +125,8 @@ export function ResultSection({
   onBack,
   onRestart,
   onShare,
-  onDownloadPDF,
+  onPrint,
 }: ResultSectionProps) {
-  const introThemes = result.introThemes?.length ? result.introThemes : result.signatureThemes;
   const { westernZodiac, chineseZodiac, mbti, bloodType, enneagram, hogwartsHouse, loveLanguage, chronotype, birthstone } = userProfile;
   const bloodTypeInfo = bloodType ? bloodTypeData[bloodType] : null;
   const bloodTypePersonality = bloodType ? koreanBloodTypePersonality[bloodType] : null;
@@ -164,7 +162,7 @@ export function ResultSection({
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         onClick={onBack}
-        className="absolute top-8 left-8 flex items-center gap-2 text-secondary-custom hover:text-gold transition-colors z-20"
+        className="print-hidden absolute top-8 left-8 flex items-center gap-2 text-secondary-custom hover:text-gold transition-colors z-20"
       >
         <ChevronLeft className="w-5 h-5" />
         <span className="font-mono text-sm uppercase tracking-wider">Back</span>
@@ -191,20 +189,9 @@ export function ResultSection({
             {result.name}
           </h1>
           
-          <p className="text-secondary-custom text-lg max-w-xl mx-auto">
+          <p className="text-secondary-custom text-lg max-w-2xl mx-auto">
             {result.dietStyle}
           </p>
-
-          <div className="flex flex-wrap items-center justify-center gap-2 max-w-3xl mx-auto mt-5">
-            {introThemes.map((theme) => (
-              <span
-                key={theme}
-                className="px-3 py-1.5 rounded-full border border-gold/25 bg-gold/10 text-xs uppercase tracking-[0.14em] text-gold"
-              >
-                {theme}
-              </span>
-            ))}
-          </div>
         </motion.div>
         
         {/* Profile cards grid */}
@@ -386,104 +373,111 @@ export function ResultSection({
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.5 }}
-          className="glass-card p-5 md:p-6 mb-10"
+          className="glass-card p-5 md:p-7 mb-10"
         >
-          <div className="grid gap-6 lg:grid-cols-[0.95fr_1.05fr]">
-            <div className="space-y-5">
-              <div>
-                <h3 className="font-heading text-lg text-foreground mb-2">Meal Rhythm That Fits You</h3>
-                <p className="text-sm text-secondary-custom leading-relaxed">
-                  {result.mealRhythm}
-                </p>
-              </div>
+          <div className="space-y-6">
+            <div>
+              <h3 className="font-heading text-lg text-foreground mb-2">Meal Rhythm That Fits You</h3>
+              <p className="text-sm text-secondary-custom leading-relaxed">
+                {result.mealRhythm}
+              </p>
+            </div>
 
-              <div className="border-t border-white/10 pt-5">
-                <h3 className="font-heading text-lg text-foreground mb-3">Your Optimal Nutrition</h3>
-                <div className="grid grid-cols-3 sm:grid-cols-5 gap-3">
-                  <div>
-                    <div className="font-heading text-xl text-gold">{result.macros.protein}%</div>
-                    <div className="text-[10px] text-secondary-custom uppercase tracking-wider">Protein</div>
+            <hr className="border-white/10" />
+
+            <div>
+              <h3 className="font-heading text-lg text-foreground mb-3">Your Optimal Nutrition</h3>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                <div>
+                  <div className="font-heading text-xl text-gold">{result.macros.protein}%</div>
+                  <div className="text-[10px] text-secondary-custom uppercase tracking-wider">Protein</div>
+                </div>
+                <div>
+                  <div className="font-heading text-xl text-gold">{result.macros.carbs}%</div>
+                  <div className="text-[10px] text-secondary-custom uppercase tracking-wider">Carbs</div>
+                </div>
+                <div>
+                  <div className="font-heading text-xl text-gold">{result.macros.fats}%</div>
+                  <div className="text-[10px] text-secondary-custom uppercase tracking-wider">Fats</div>
+                </div>
+                <div>
+                  <div className="font-heading text-xl text-gold">{result.macros.fiber}g</div>
+                  <div className="text-[10px] text-secondary-custom uppercase tracking-wider">Fiber</div>
+                </div>
+                <div className="col-span-2 sm:col-span-4 flex items-start gap-3 rounded-md border border-cyan-300/15 bg-cyan-300/5 p-3">
+                  <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-cyan-300/10 text-cyan-200">
+                    <Droplets className="h-4 w-4" />
                   </div>
-                  <div>
-                    <div className="font-heading text-xl text-gold">{result.macros.carbs}%</div>
-                    <div className="text-[10px] text-secondary-custom uppercase tracking-wider">Carbs</div>
-                  </div>
-                  <div>
-                    <div className="font-heading text-xl text-gold">{result.macros.fats}%</div>
-                    <div className="text-[10px] text-secondary-custom uppercase tracking-wider">Fats</div>
-                  </div>
-                  <div>
-                    <div className="font-heading text-xl text-gold">{result.macros.fiber}g</div>
-                    <div className="text-[10px] text-secondary-custom uppercase tracking-wider">Fiber</div>
-                  </div>
-                  <div className="col-span-2 sm:col-span-1">
-                    <div className="font-heading text-sm text-gold leading-snug">{result.macros.hydration}</div>
+                  <div className="min-w-0">
                     <div className="text-[10px] text-secondary-custom uppercase tracking-wider">Hydration</div>
+                    <div className="font-heading text-sm text-gold leading-snug">{result.macros.hydration}</div>
                   </div>
                 </div>
               </div>
             </div>
 
-            <div className="space-y-5 lg:border-l lg:border-white/10 lg:pl-6">
-              <div className="grid gap-5 md:grid-cols-2">
-                <div>
-                  <div className="flex items-center gap-2 mb-3">
-                    <div className="w-8 h-8 rounded-full bg-green-500/20 flex items-center justify-center">
-                      <Leaf className="w-4 h-4 text-green-400" />
-                    </div>
-                    <h3 className="font-heading text-lg text-foreground">Suggested Ingredients</h3>
-                  </div>
+            <hr className="border-white/10" />
 
-                  <div className="flex flex-wrap gap-2">
-                    {result.ingredientsToPrioritize.slice(0, 10).map((ingredient) => (
-                      <span
-                        key={ingredient}
-                        className="px-2.5 py-1 rounded-full text-[11px] bg-green-500/10 text-green-300 border border-green-500/30"
-                      >
-                        {ingredient}
-                      </span>
-                    ))}
-                  </div>
+            <div>
+              <div className="flex items-center gap-2 mb-3">
+                <div className="w-8 h-8 rounded-full bg-green-500/20 flex items-center justify-center">
+                  <Leaf className="w-4 h-4 text-green-400" />
                 </div>
-
-                <div>
-                  <div className="flex items-center gap-2 mb-3">
-                    <div className="w-8 h-8 rounded-full bg-red-500/20 flex items-center justify-center">
-                      <AlertTriangle className="w-4 h-4 text-red-400" />
-                    </div>
-                    <h3 className="font-heading text-lg text-foreground">Limit or Avoid</h3>
-                  </div>
-
-                  <div className="flex flex-wrap gap-2">
-                    {result.foodsToAvoid.slice(0, 6).map((food) => (
-                      <span
-                        key={food}
-                        className="px-2.5 py-1 rounded-full text-[11px] bg-red-500/10 text-red-300 border border-red-500/30"
-                      >
-                        {food}
-                      </span>
-                    ))}
-                  </div>
-                </div>
+                <h3 className="font-heading text-lg text-foreground">Suggested Ingredients</h3>
               </div>
 
-              <div className="border-t border-white/10 pt-5">
-                <div className="flex items-center gap-2 mb-3">
-                  <div className="w-8 h-8 rounded-full bg-gold/20 flex items-center justify-center">
-                    <Star className="w-4 h-4 text-gold" />
-                  </div>
-                  <h3 className="font-heading text-lg text-foreground">Simple Rituals</h3>
-                </div>
+              <ul className="grid gap-x-6 gap-y-2 sm:grid-cols-2">
+                {result.ingredientsToPrioritize.slice(0, 10).map((ingredient) => (
+                  <li
+                    key={ingredient}
+                    className="border-l border-green-500/30 pl-3 text-sm text-secondary-custom"
+                  >
+                    {ingredient}
+                  </li>
+                ))}
+              </ul>
+            </div>
 
-                <ul className="grid gap-2 md:grid-cols-2">
-                  {result.rituals.slice(0, 4).map((ritual) => (
-                    <li key={ritual} className="flex items-start gap-2.5 text-sm text-secondary-custom">
-                      <span className="mt-2 h-1.5 w-1.5 rounded-full bg-gold flex-shrink-0" />
-                      <span>{ritual}</span>
-                    </li>
-                  ))}
-                </ul>
+            <hr className="border-white/10" />
+
+            <div>
+              <div className="flex items-center gap-2 mb-3">
+                <div className="w-8 h-8 rounded-full bg-red-500/20 flex items-center justify-center">
+                  <AlertTriangle className="w-4 h-4 text-red-400" />
+                </div>
+                <h3 className="font-heading text-lg text-foreground">Limit or Avoid</h3>
               </div>
+
+              <ul className="grid gap-x-6 gap-y-2 sm:grid-cols-2">
+                {result.foodsToAvoid.slice(0, 6).map((food) => (
+                  <li
+                    key={food}
+                    className="border-l border-red-500/30 pl-3 text-sm text-secondary-custom"
+                  >
+                    {food}
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            <hr className="border-white/10" />
+
+            <div>
+              <div className="flex items-center gap-2 mb-3">
+                <div className="w-8 h-8 rounded-full bg-gold/20 flex items-center justify-center">
+                  <Star className="w-4 h-4 text-gold" />
+                </div>
+                <h3 className="font-heading text-lg text-foreground">Simple Rituals</h3>
+              </div>
+
+              <ul className="space-y-2">
+                {result.rituals.slice(0, 4).map((ritual) => (
+                  <li key={ritual} className="flex items-start gap-2.5 text-sm text-secondary-custom">
+                    <span className="mt-2 h-1.5 w-1.5 rounded-full bg-gold flex-shrink-0" />
+                    <span>{ritual}</span>
+                  </li>
+                ))}
+              </ul>
             </div>
           </div>
         </motion.div>
@@ -493,7 +487,7 @@ export function ResultSection({
           initial={{ opacity: 0, y: 30, scale: 0.95 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
           transition={{ duration: 0.8, delay: 0.75 }}
-          className="glass-card p-8 md:p-12 text-center max-w-2xl mx-auto"
+          className="print-hidden glass-card p-8 md:p-12 text-center max-w-2xl mx-auto"
         >
           <motion.div
             initial={{ scale: 0 }}
@@ -518,11 +512,11 @@ export function ResultSection({
             <motion.button
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
-              onClick={onDownloadPDF}
+              onClick={onPrint}
               className="flex items-center justify-center gap-3 px-6 py-4 rounded-xl bg-secondary-dark border border-white/10 hover:border-gold/30 transition-colors"
             >
-              <Download className="w-5 h-5 text-gold" />
-              <span className="text-foreground">Print / PDF</span>
+              <Printer className="w-5 h-5 text-gold" />
+              <span className="text-foreground">Print</span>
             </motion.button>
 
             <motion.button
@@ -557,11 +551,9 @@ export function ResultSection({
               Built from symbols, stories, and selected science.
             </p>
 
-            <div className="flex items-center justify-center gap-1 text-xs text-secondary-custom/40">
-              <span>Made with</span>
-              <Heart className="w-3 h-3 text-red-400 fill-red-400" />
-              <span>for your sacred journey</span>
-            </div>
+            <p className="mx-auto max-w-xs text-xs leading-relaxed text-secondary-custom/40">
+              Made with 💗 in Stockholm, for your sacred journey
+            </p>
           </div>
         </motion.div>
       </div>

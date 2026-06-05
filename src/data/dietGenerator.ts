@@ -89,7 +89,7 @@ const doshaThemeBanks: Record<DoshaType, string[]> = {
 
 const introDoshaThemeBanks: Record<DoshaType, string[]> = {
   vata: ['Grounded steadiness', 'Calm sensory grounding', 'Soft inner steadiness'],
-  pitta: ['Composed clarity', 'Measured intensity', 'Bright emotional balance'],
+  pitta: ['Composed clarity'],
   kapha: ['Light activation', 'Clear momentum', 'Awake steadiness']
 };
 
@@ -102,7 +102,7 @@ const accentThemeBanks: Record<DoshaType, string[]> = {
 const introAccentThemeBanks: Record<DoshaType, string[]> = {
   vata: ['Curious flexibility', 'Easy movement', 'Adaptive pacing'],
   pitta: ['Fresh perspective', 'Clean mental space', 'Balanced restraint'],
-  kapha: ['Energized lift', 'Crisp momentum', 'Responsive lightness']
+  kapha: ['Responsive lightness']
 };
 
 const elementThemeBanks = {
@@ -116,7 +116,7 @@ const introElementThemeBanks = {
   fire: ['Bold expression', 'Solar confidence', 'Celebratory energy'],
   earth: ['Rooted reliability', 'Patient depth', 'Slow-built trust'],
   air: ['Lively curiosity', 'Layered perspective', 'Quick adaptability'],
-  water: ['Reflective depth', 'Fluid calm', 'Emotional spaciousness']
+  water: ['Emotional spaciousness']
 } as const;
 
 const structureThemeBanks = {
@@ -125,7 +125,7 @@ const structureThemeBanks = {
 } as const;
 
 const introStructureThemeBanks = {
-  J: ['Structured daily rhythm', 'Planned stability', 'Consistent anchors'],
+  J: ['Planned stability'],
   P: ['Flexible daily flow', 'Open-ended pacing', 'Room for instinct']
 } as const;
 
@@ -135,7 +135,7 @@ const decisionThemeBanks = {
 } as const;
 
 const introDecisionThemeBanks = {
-  T: ['Strategic discernment', 'Functional clarity', 'Performance-minded focus'],
+  T: ['Performance-minded focus'],
   F: ['Emotional resonance', 'Meaningful comfort', 'Mood-aware intuition']
 } as const;
 
@@ -493,19 +493,19 @@ function calculateMacros(profile: UserProfile): { protein: number; carbs: number
 
   const hydrationMap = {
     vata: {
-      vata: '2.7-3 liters of warm water and calming teas',
-      pitta: '2.6-3 liters of warm water with mint or fennel',
-      kapha: '2.5-2.8 liters of warm water with gentle spice'
+      vata: '2.7-3 L warm water + calming teas',
+      pitta: '2.6-3 L warm water, mint, or fennel',
+      kapha: '2.5-2.8 L warm water + gentle spice'
     },
     pitta: {
-      vata: '2.5-2.8 liters with cooling herbs and steady sipping',
-      pitta: '2.3-2.7 liters with cucumber, mint, or aloe-rich hydration',
-      kapha: '2.3-2.6 liters with cooling water and lighter evening fluids'
+      vata: '2.5-2.8 L cooling herbs + steady sips',
+      pitta: '2.3-2.7 L cucumber, mint, or aloe',
+      kapha: '2.3-2.6 L cooling water, lighter evenings'
     },
     kapha: {
-      vata: '2.2-2.5 liters of warm water in smaller, regular servings',
-      pitta: '2.2-2.5 liters with ginger-fennel or coriander teas',
-      kapha: '2-2.4 liters of warm water and stimulating herbal teas'
+      vata: '2.2-2.5 L warm water, regular sips',
+      pitta: '2.2-2.5 L ginger-fennel or coriander tea',
+      kapha: '2-2.4 L warm water + herbal teas'
     }
   } as const;
 

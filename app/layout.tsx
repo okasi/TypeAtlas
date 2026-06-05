@@ -4,7 +4,7 @@ import '../src/index.css'
 
 export const metadata: Metadata = {
   title: 'TypeAtlas',
-  description: 'Discover your personalized nutrition archetype with TypeAtlas.',
+  description: 'Understand what supports your nature ✨',
 }
 
 export default function RootLayout({
