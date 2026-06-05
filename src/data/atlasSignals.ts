@@ -26,7 +26,7 @@ export const atlasSignalQuestions: AtlasSignalQuestion[] = [
     id: 'enneagram',
     category: 'Enneagram',
     question: 'Which core motivation feels most familiar to you?',
-    helper: 'This is a lightweight self-sort, not a formal Enneagram assessment.',
+    helper: 'Pick the motive that keeps showing up; use it as a clue, not a verdict.',
     options: [
       { value: '1', title: 'Type 1', description: 'I want to be good, principled, and correct.', emoji: '⚖️' },
       { value: '2', title: 'Type 2', description: 'I want to be helpful, loved, and needed.', emoji: '🤝' },
@@ -44,7 +44,7 @@ export const atlasSignalQuestions: AtlasSignalQuestion[] = [
     id: 'hogwartsHouse',
     category: 'Hogwarts House',
     question: 'Which value cluster feels most like your default mode?',
-    helper: 'This is a playful identity signal rather than a psychological test.',
+    helper: 'Choose the house whose instincts feel easiest to recognize.',
     options: [
       { value: 'gryffindor', title: 'Gryffindor', description: 'Bravery, nerve, initiative, heart.', emoji: '🦁' },
       { value: 'slytherin', title: 'Slytherin', description: 'Ambition, strategy, resourcefulness, drive.', emoji: '🐍' },
@@ -57,7 +57,7 @@ export const atlasSignalQuestions: AtlasSignalQuestion[] = [
     id: 'loveLanguage',
     category: 'Love Language',
     question: 'What kind of care lands most clearly for you?',
-    helper: 'We treat this as a communication preference prompt, not a hard type.',
+    helper: 'Name the kind of care you notice first when it is missing.',
     options: [
       { value: 'words', title: 'Words of Affirmation', description: 'Encouragement, praise, and being told what I mean to someone.', emoji: '💬' },
       { value: 'time', title: 'Quality Time', description: 'Undivided attention and real presence.', emoji: '⏳' },

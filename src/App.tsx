@@ -25,8 +25,6 @@ import { ProgressBar } from '@/components/ProgressBar';
 import { useLivePresence } from '@/hooks/use-live-presence';
 import { Toaster } from '@/components/ui/sonner';
 import { toast } from 'sonner';
-import html2canvas from 'html2canvas';
-import jsPDF from 'jspdf';
 
 type AppView = FlowView;
 const PROFILE_STORAGE_KEY = 'typeatlas-profile';
@@ -782,190 +780,13 @@ function App() {
     }
   };
 
-  const handleDownloadPDF = async () => {
+  const handlePrint = () => {
     if (!result || !userProfile.name) {
       toast.error('No profile data available');
       return;
     }
 
-    try {
-      toast.info('Generating your TypeAtlas PDF...');
-      
-      // Create a temporary container for PDF content
-      const pdfContainer = document.createElement('div');
-      pdfContainer.style.cssText = `
-        position: absolute;
-        left: -9999px;
-        top: 0;
-        width: 800px;
-        background: #0B0D10;
-        color: #F4F6FF;
-        padding: 40px;
-        font-family: 'Inter', sans-serif;
-      `;
-      document.body.appendChild(pdfContainer);
-
-      // Generate PDF content
-      const doshaPercentages = {
-        vata: Math.round((userProfile.dosha?.vata || 0) / 21 * 100),
-        pitta: Math.round((userProfile.dosha?.pitta || 0) / 21 * 100),
-        kapha: Math.round((userProfile.dosha?.kapha || 0) / 21 * 100)
-      };
-
-      pdfContainer.innerHTML = `
-        <div style="text-align: center; margin-bottom: 30px;">
-          <h1 style="font-family: 'Cinzel', serif; color: #F3B855; font-size: 32px; margin-bottom: 10px;">✦ TYPEATLAS ✦</h1>
-          <p style="color: #A7B0C8; font-size: 14px;">Your Personalized Nutrition Guide</p>
-        </div>
-        
-        <div style="background: rgba(18, 21, 28, 0.8); border: 1px solid rgba(243, 184, 85, 0.3); border-radius: 16px; padding: 24px; margin-bottom: 24px;">
-          <h2 style="font-family: 'Cinzel', serif; color: #F3B855; font-size: 24px; text-align: center; margin-bottom: 8px;">${result.name}</h2>
-          <p style="color: #A7B0C8; text-align: center; font-size: 14px;">${result.dietStyle}</p>
-        </div>
-        
-        <div style="margin-bottom: 24px;">
-          <h3 style="font-family: 'Cinzel', serif; color: #F3B855; font-size: 18px; margin-bottom: 12px; border-bottom: 1px solid rgba(243, 184, 85, 0.2); padding-bottom: 8px;">Your Sacred Profile</h3>
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; font-size: 13px;">
-            <div style="background: rgba(18, 21, 28, 0.5); padding: 12px; border-radius: 8px;">
-              <span style="color: #A7B0C8;">Western Zodiac:</span> <span style="color: #F4F6FF;">${userProfile.westernZodiac}</span>
-            </div>
-            <div style="background: rgba(18, 21, 28, 0.5); padding: 12px; border-radius: 8px;">
-              <span style="color: #A7B0C8;">Chinese Zodiac:</span> <span style="color: #F4F6FF;">${userProfile.chineseZodiac}</span>
-            </div>
-            <div style="background: rgba(18, 21, 28, 0.5); padding: 12px; border-radius: 8px;">
-              <span style="color: #A7B0C8;">Blood Type:</span> <span style="color: #F4F6FF;">${userProfile.bloodType ?? 'Not provided'}</span>
-            </div>
-            <div style="background: rgba(18, 21, 28, 0.5); padding: 12px; border-radius: 8px;">
-              <span style="color: #A7B0C8;">Personality:</span> <span style="color: #F4F6FF;">${userProfile.mbti}</span>
-            </div>
-            <div style="background: rgba(18, 21, 28, 0.5); padding: 12px; border-radius: 8px;">
-              <span style="color: #A7B0C8;">Enneagram:</span> <span style="color: #F4F6FF;">${userProfile.enneagram ?? 'Skipped'}</span>
-            </div>
-            <div style="background: rgba(18, 21, 28, 0.5); padding: 12px; border-radius: 8px;">
-              <span style="color: #A7B0C8;">House:</span> <span style="color: #F4F6FF;">${userProfile.hogwartsHouse ?? 'Skipped'}</span>
-            </div>
-            <div style="background: rgba(18, 21, 28, 0.5); padding: 12px; border-radius: 8px;">
-              <span style="color: #A7B0C8;">Love Language:</span> <span style="color: #F4F6FF;">${userProfile.loveLanguage ?? 'Skipped'}</span>
-            </div>
-            <div style="background: rgba(18, 21, 28, 0.5); padding: 12px; border-radius: 8px;">
-              <span style="color: #A7B0C8;">Chronotype:</span> <span style="color: #F4F6FF;">${userProfile.chronotype ?? 'Skipped'}</span>
-            </div>
-            <div style="background: rgba(18, 21, 28, 0.5); padding: 12px; border-radius: 8px;">
-              <span style="color: #A7B0C8;">Birthstone:</span> <span style="color: #F4F6FF;">${userProfile.birthstone ?? 'Unavailable'}</span>
-            </div>
-          </div>
-        </div>
-        
-        <div style="margin-bottom: 24px;">
-          <h3 style="font-family: 'Cinzel', serif; color: #F3B855; font-size: 18px; margin-bottom: 12px; border-bottom: 1px solid rgba(243, 184, 85, 0.2); padding-bottom: 8px;">Dosha Balance</h3>
-          <div style="font-size: 13px;">
-            <div style="margin-bottom: 8px;"><span style="color: #A7B0C8;">Vata:</span> <span style="color: #F4F6FF;">${doshaPercentages.vata}%</span></div>
-            <div style="margin-bottom: 8px;"><span style="color: #A7B0C8;">Pitta:</span> <span style="color: #F4F6FF;">${doshaPercentages.pitta}%</span></div>
-            <div style="margin-bottom: 8px;"><span style="color: #A7B0C8;">Kapha:</span> <span style="color: #F4F6FF;">${doshaPercentages.kapha}%</span></div>
-            <div style="color: #F3B855; margin-top: 8px;">Dominant: ${userProfile.dominantDosha}</div>
-          </div>
-        </div>
-        
-        <div style="margin-bottom: 24px;">
-          <h3 style="font-family: 'Cinzel', serif; color: #F3B855; font-size: 18px; margin-bottom: 12px; border-bottom: 1px solid rgba(243, 184, 85, 0.2); padding-bottom: 8px;">Optimal Nutrition</h3>
-          <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; text-align: center; font-size: 12px;">
-            <div style="background: rgba(243, 184, 85, 0.1); padding: 12px; border-radius: 8px;">
-              <div style="color: #F3B855; font-size: 18px; font-weight: bold;">${result.macros.protein}%</div>
-              <div style="color: #A7B0C8;">Protein</div>
-            </div>
-            <div style="background: rgba(243, 184, 85, 0.1); padding: 12px; border-radius: 8px;">
-              <div style="color: #F3B855; font-size: 18px; font-weight: bold;">${result.macros.carbs}%</div>
-              <div style="color: #A7B0C8;">Carbs</div>
-            </div>
-            <div style="background: rgba(243, 184, 85, 0.1); padding: 12px; border-radius: 8px;">
-              <div style="color: #F3B855; font-size: 18px; font-weight: bold;">${result.macros.fats}%</div>
-              <div style="color: #A7B0C8;">Fats</div>
-            </div>
-            <div style="background: rgba(243, 184, 85, 0.1); padding: 12px; border-radius: 8px;">
-              <div style="color: #F3B855; font-size: 18px; font-weight: bold;">${result.macros.fiber}g</div>
-              <div style="color: #A7B0C8;">Fiber</div>
-            </div>
-            <div style="background: rgba(243, 184, 85, 0.1); padding: 12px; border-radius: 8px;">
-              <div style="color: #F3B855; font-size: 14px; font-weight: bold;">Daily</div>
-              <div style="color: #A7B0C8;">Hydration</div>
-            </div>
-          </div>
-        </div>
-        
-        <div style="margin-bottom: 24px;">
-          <h3 style="font-family: 'Cinzel', serif; color: #F3B855; font-size: 18px; margin-bottom: 12px; border-bottom: 1px solid rgba(243, 184, 85, 0.2); padding-bottom: 8px;">Ingredients to Prioritize</h3>
-          <div style="font-size: 12px; color: #A7B0C8;">
-            ${result.ingredientsToPrioritize.map(ingredient => `<span style="display: inline-block; background: rgba(34, 197, 94, 0.1); color: #86efac; padding: 4px 8px; border-radius: 12px; margin: 2px;">${ingredient}</span>`).join('')}
-          </div>
-        </div>
-        
-        <div style="margin-bottom: 24px;">
-          <h3 style="font-family: 'Cinzel', serif; color: #F3B855; font-size: 18px; margin-bottom: 12px; border-bottom: 1px solid rgba(243, 184, 85, 0.2); padding-bottom: 8px;">Ingredients to Limit or Avoid</h3>
-          <div style="font-size: 12px; color: #A7B0C8;">
-            ${result.foodsToAvoid.map(food => `<span style="display: inline-block; background: rgba(239, 68, 68, 0.1); color: #fca5a5; padding: 4px 8px; border-radius: 12px; margin: 2px;">${food}</span>`).join('')}
-          </div>
-        </div>
-        
-        <div style="margin-bottom: 24px;">
-          <h3 style="font-family: 'Cinzel', serif; color: #F3B855; font-size: 18px; margin-bottom: 12px; border-bottom: 1px solid rgba(243, 184, 85, 0.2); padding-bottom: 8px;">Sacred Rituals</h3>
-          <ul style="font-size: 12px; color: #A7B0C8; padding-left: 16px;">
-            ${result.rituals.map(ritual => `<li style="margin-bottom: 6px;">${ritual}</li>`).join('')}
-          </ul>
-        </div>
-        
-        <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid rgba(243, 184, 85, 0.2);">
-          <p style="color: #F3B855; font-size: 12px; font-style: italic;">✦ ${result.insight} ✦</p>
-          <p style="color: #A7B0C8; font-size: 10px; margin-top: 12px;">Generated by TypeAtlas • ${new Date().toLocaleDateString()}</p>
-        </div>
-      `;
-
-      // Capture the content as canvas
-      const canvas = await html2canvas(pdfContainer, {
-        scale: 2,
-        useCORS: true,
-        backgroundColor: '#0B0D10'
-      });
-
-      // Calculate PDF dimensions
-      const imgData = canvas.toDataURL('image/png');
-      const pdf = new jsPDF('p', 'mm', 'a4');
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = pdf.internal.pageSize.getHeight();
-      const imgWidth = canvas.width;
-      const imgHeight = canvas.height;
-      const ratio = Math.min(pdfWidth / imgWidth, pdfHeight / imgHeight);
-      
-      // Add image to PDF (scaled to fit)
-      const scaledWidth = imgWidth * ratio * 0.95;
-      const scaledHeight = imgHeight * ratio * 0.95;
-      const x = (pdfWidth - scaledWidth) / 2;
-      
-      // If content is too long, we need multiple pages
-      let heightLeft = scaledHeight;
-      let position = 0;
-      
-      pdf.addImage(imgData, 'PNG', x, position, scaledWidth, scaledHeight);
-      heightLeft -= pdfHeight;
-      
-      // Add new pages if content overflows
-      while (heightLeft > 0) {
-        position = heightLeft - scaledHeight;
-        pdf.addPage();
-        pdf.addImage(imgData, 'PNG', x, position, scaledWidth, scaledHeight);
-        heightLeft -= pdfHeight;
-      }
-
-      // Save the PDF
-      pdf.save(`TypeAtlas-${userProfile.name}-${result.name}.pdf`);
-      
-      // Clean up
-      document.body.removeChild(pdfContainer);
-      
-      toast.success('Your TypeAtlas PDF has been downloaded!');
-    } catch (error) {
-      console.error('PDF generation error:', error);
-      toast.error('Failed to generate PDF. Please try again.');
-    }
+    window.print();
   };
 
   return (
@@ -1047,16 +868,18 @@ function App() {
             onBack={() => setCurrentView('quiz-signals')}
             onRestart={handleRestart}
             onShare={handleShare}
-            onDownloadPDF={handleDownloadPDF}
+            onPrint={handlePrint}
           />
         )}
       </main>
 
-      <LivePresencePanel
-        sessionId={sessionId}
-        participants={participants}
-        isConnected={isConnected}
-      />
+      <div className="print-hidden">
+        <LivePresencePanel
+          sessionId={sessionId}
+          participants={participants}
+          isConnected={isConnected}
+        />
+      </div>
       
       <Toaster 
         position="bottom-center"

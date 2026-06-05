@@ -352,3 +352,23 @@
   background: rgba(243, 184, 85, 0.3);
   color: #F4F6FF;
 }
+
+@media print {
+  @page {
+    margin: 0.35in;
+  }
+
+  html,
+  body {
+    background: #0B0D10 !important;
+    color: #F4F6FF !important;
+    overflow: visible !important;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  .print-hidden,
+  .grain-overlay {
+    display: none !important;
+  }
+}
