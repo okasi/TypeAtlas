@@ -21,8 +21,6 @@ import { QuizSection } from '@/sections/QuizSection';
 import { AtlasSignalsSection } from '@/sections/AtlasSignalsSection';
 import { LoadingSection } from '@/sections/LoadingSection';
 import { ResultSection } from '@/sections/ResultSection';
-import { MealPlanSection } from '@/sections/MealPlanSection';
-import { ClosingSection } from '@/sections/ClosingSection';
 import { ProgressBar } from '@/components/ProgressBar';
 import { useLivePresence } from '@/hooks/use-live-presence';
 import { Toaster } from '@/components/ui/sonner';
@@ -46,8 +44,6 @@ const APP_VIEWS: AppView[] = [
   'quiz-signals',
   'loading',
   'result',
-  'mealplan',
-  'closing',
 ];
 
 const ATLAS_SIGNAL_PARAM_NAMES: Record<AtlasSignalKey, string> = {
@@ -372,7 +368,7 @@ function resolveView(requestedView: AppView, profile: Partial<UserProfile>, resu
           : 'form';
   }
 
-  if (requestedView === 'result' || requestedView === 'closing') {
+  if (requestedView === 'result') {
     return result ? requestedView : profile.dosha && profile.dominantDosha ? 'quiz-signals' : 'form';
   }
 
@@ -451,9 +447,7 @@ function App() {
     'quiz-dosha': 55,
     'quiz-signals': 72,
     'loading': 80,
-    'result': 90,
-    'mealplan': 95,
-    'closing': 100
+    'result': 100
   };
   const progress = progressMap[currentView];
   const liveProgress =
@@ -476,6 +470,50 @@ function App() {
             : currentView === 'result'
               ? 'Viewing result'
               : 'Wrapping up';
+  const documentTitle = (() => {
+    if (currentView === 'landing') {
+      return 'TypeAtlas';
+    }
+
+    if (currentView === 'form') {
+      return 'Profile | TypeAtlas';
+    }
+
+    if (currentView === 'quiz-mbti') {
+      const totalSteps = mbtiQuizQuestions.length + 1;
+      const currentStep = Math.min(Math.max(mbtiStep, 0), totalSteps - 1);
+      const titleStep = currentStep === 0
+        ? 'Blood Type'
+        : `MBTI Question ${currentStep}`;
+
+      return `${titleStep} (${currentStep + 1}/${totalSteps}) | TypeAtlas`;
+    }
+
+    if (currentView === 'quiz-dosha') {
+      const totalSteps = doshaQuizQuestions.length;
+      const currentStep = Math.min(Math.max(doshaStep, 0), totalSteps - 1);
+
+      return `Dosha Question ${currentStep + 1} (${currentStep + 1}/${totalSteps}) | TypeAtlas`;
+    }
+
+    if (currentView === 'quiz-signals') {
+      const totalSteps = atlasSignalQuestions.length;
+      const currentStep = Math.min(Math.max(signalsStep, 0), totalSteps - 1);
+      const category = atlasSignalQuestions[currentStep]?.category ?? 'Signals';
+
+      return `${category} (${currentStep + 1}/${totalSteps}) | TypeAtlas`;
+    }
+
+    if (currentView === 'loading') {
+      return 'Generating Result | TypeAtlas';
+    }
+
+    if (currentView === 'result') {
+      return result ? `${result.name} | TypeAtlas` : 'Result | TypeAtlas';
+    }
+
+    return 'TypeAtlas';
+  })();
   const {
     sessionId,
     participants,
@@ -487,6 +525,17 @@ function App() {
     userProfile,
     result,
   });
+
+  useEffect(() => {
+    const updateDocumentTitle = () => {
+      document.title = documentTitle;
+    };
+
+    updateDocumentTitle();
+    const titleTimer = window.setTimeout(updateDocumentTitle, 0);
+
+    return () => window.clearTimeout(titleTimer);
+  }, [documentTitle]);
 
   useEffect(() => {
     const params = new URLSearchParams();
@@ -663,10 +712,6 @@ function App() {
     setCurrentView('loading');
   };
 
-  const handleViewClosing = () => {
-    setCurrentView('closing');
-  };
-
   const handleMbtiStateChange = useCallback((details: {
     answers: number[];
     currentStep: number;
@@ -714,20 +759,26 @@ function App() {
   };
 
   const handleShare = async () => {
-    if (navigator.share && result) {
-      try {
-        await navigator.share({
-          title: `My TypeAtlas Profile: ${result.name}`,
-          text: `I discovered my archetype in TypeAtlas: ${result.name}. Find yours at TypeAtlas.`,
-          url: window.location.href
-        });
-      } catch {
-        toast.error('Could not share. Try copying the link instead.');
+    const url = window.location.href;
+
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(url);
+      } else {
+        const textArea = document.createElement('textarea');
+        textArea.value = url;
+        textArea.setAttribute('readonly', '');
+        textArea.style.position = 'fixed';
+        textArea.style.opacity = '0';
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textArea);
       }
-    } else {
-      // Fallback: copy to clipboard
-      navigator.clipboard.writeText(window.location.href);
+
       toast.success('Link copied to clipboard!');
+    } catch {
+      toast.error('Could not copy link. Please copy it from the address bar.');
     }
   };
 
@@ -993,23 +1044,7 @@ function App() {
           <ResultSection 
             result={result}
             userProfile={userProfile as UserProfile}
-            onViewClosing={handleViewClosing}
             onBack={() => setCurrentView('quiz-signals')}
-          />
-        )}
-
-        {currentView === 'mealplan' && result && (
-          <MealPlanSection
-            result={result}
-            onViewClosing={handleViewClosing}
-            onBack={() => setCurrentView('result')}
-          />
-        )}
-        
-        {currentView === 'closing' && result && (
-          <ClosingSection 
-            result={result}
-            onBack={() => setCurrentView('result')}
             onRestart={handleRestart}
             onShare={handleShare}
             onDownloadPDF={handleDownloadPDF}

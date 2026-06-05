@@ -42,9 +42,7 @@ export type FlowView =
   | 'quiz-dosha'
   | 'quiz-signals'
   | 'loading'
-  | 'result'
-  | 'mealplan'
-  | 'closing';
+  | 'result';
 
 export interface DoshaScores {
   vata: number;
