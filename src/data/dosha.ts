@@ -252,7 +252,7 @@ export const doshaQuizQuestions: QuizQuestion[] = [
     id: 4,
     category: 'Mind & Emotions',
     question: 'Which emotional and mental patterns resonate with you most?',
-    info: 'Your mental rhythm points to the element that moves you: airy change, focused fire, or grounded calm.',
+    info: 'Your mental rhythm points to the element that moves you.',
     options: [
       { text: 'Creative, enthusiastic, quick to learn but prone to worry and changeability', emoji: '🎭', scores: { vata: 3, pitta: 0, kapha: 0 } },
       { text: 'Focused, passionate, sharp intellect but can be critical and intense', emoji: '🎯', scores: { vata: 0, pitta: 3, kapha: 0 } },
