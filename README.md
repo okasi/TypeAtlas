@@ -1,6 +1,6 @@
-# Sacred Plate
+# TypeAtlas
 
-Sacred Plate is now a Next.js App Router application. The existing quiz flow remains in `src/App.tsx`, and the Next entrypoints live in `app/layout.tsx` and `app/page.tsx`.
+TypeAtlas is now a Next.js App Router application. The existing quiz flow remains in `src/App.tsx`, and the Next entrypoints live in `app/layout.tsx` and `app/page.tsx`.
 
 ## Scripts
 

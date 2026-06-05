@@ -48,7 +48,7 @@ export function MealPlanSection({ result, onViewClosing, onBack }: MealPlanSecti
           <div className="flex items-center justify-center gap-3 mb-4">
             <Sparkles className="w-5 h-5 text-gold" />
             <span className="font-mono text-xs uppercase tracking-[0.2em] text-secondary-custom">
-              Your Sacred Sync
+              Your TypeAtlas Profile
             </span>
             <Sparkles className="w-5 h-5 text-gold" />
           </div>

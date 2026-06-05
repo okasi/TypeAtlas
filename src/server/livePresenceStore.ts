@@ -12,18 +12,20 @@ interface LivePresenceState {
 }
 
 declare global {
+  var __typeAtlasLivePresenceState__: LivePresenceState | undefined;
   var __sacredPlateLivePresenceState__: LivePresenceState | undefined;
 }
 
 function getState() {
-  if (!globalThis.__sacredPlateLivePresenceState__) {
-    globalThis.__sacredPlateLivePresenceState__ = {
+  if (!globalThis.__typeAtlasLivePresenceState__) {
+    globalThis.__typeAtlasLivePresenceState__ = globalThis.__sacredPlateLivePresenceState__ ?? {
       participants: new Map<string, LivePresenceRecord>(),
       listeners: new Set<() => void>(),
     };
+    globalThis.__sacredPlateLivePresenceState__ = undefined;
   }
 
-  return globalThis.__sacredPlateLivePresenceState__;
+  return globalThis.__typeAtlasLivePresenceState__;
 }
 
 function notifyListeners() {

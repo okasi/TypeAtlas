@@ -94,12 +94,12 @@ export function ClosingSection({ result, onRestart, onShare, onDownloadPDF }: Cl
           <div className="border-t border-white/10 pt-8">
             <div className="flex items-center justify-center gap-2 mb-4">
               <Sparkles className="w-4 h-4 text-gold" />
-              <span className="font-heading text-lg text-foreground">Sacred Sync</span>
+              <span className="font-heading text-lg text-foreground">TypeAtlas</span>
               <Sparkles className="w-4 h-4 text-gold" />
             </div>
             
             <p className="text-xs text-secondary-custom/60 mb-4">
-              Built from stars, soil, and science.
+              Built from symbols, stories, and selected science.
             </p>
             
             <div className="flex items-center justify-center gap-1 text-xs text-secondary-custom/40">

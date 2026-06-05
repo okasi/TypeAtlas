@@ -488,6 +488,7 @@ export const mbtiQuizQuestions: QuizQuestion[] = [
     id: 1,
     category: 'Energy & Social Style',
     question: 'After a long week, how do you prefer to recharge?',
+    info: 'Your recharge ritual is a quiet signal of where your nervous system goes to feel like itself again.',
     options: [
       { text: 'Spend quiet time alone reading or reflecting', emoji: '📚', scores: { I: 3, E: 0 } },
       { text: 'Have a deep one-on-one conversation', emoji: '💬', scores: { I: 2, E: 1 } },
@@ -499,6 +500,7 @@ export const mbtiQuizQuestions: QuizQuestion[] = [
     id: 2,
     category: 'Information & Decisions',
     question: 'When learning something new and making decisions, what appeals to you most?',
+    info: 'Some minds trust what can be held in the hand; others follow the pattern hiding behind the facts.',
     options: [
       { text: 'Concrete facts, practical applications, and logical analysis', emoji: '📊', scores: { S: 2, N: 0, T: 2, F: 0 } },
       { text: 'Proven methods, step-by-step details, and objective criteria', emoji: '📋', scores: { S: 3, N: 0, T: 1, F: 1 } },
@@ -510,6 +512,7 @@ export const mbtiQuizQuestions: QuizQuestion[] = [
     id: 3,
     category: 'Problem Solving',
     question: 'When facing a challenge, your approach is to:',
+    info: 'Your first instinct often points to the known path, the hidden door, or a new map entirely.',
     options: [
       { text: 'Focus on practical, immediate solutions using proven methods', emoji: '🔧', scores: { S: 3, N: 0 } },
       { text: 'Use tried-and-true approaches that have worked before', emoji: '🛠️', scores: { S: 2, N: 1 } },
@@ -521,6 +524,7 @@ export const mbtiQuizQuestions: QuizQuestion[] = [
     id: 4,
     category: 'Lifestyle & Organization',
     question: 'How do you prefer to organize your daily life?',
+    info: 'The way you hold time says a lot about whether structure steadies you or possibility keeps you alive.',
     options: [
       { text: 'Detailed schedules and clear plans with deadlines', emoji: '📅', scores: { J: 3, P: 0 } },
       { text: 'To-do lists and structured routines', emoji: '✅', scores: { J: 2, P: 1 } },
@@ -532,6 +536,7 @@ export const mbtiQuizQuestions: QuizQuestion[] = [
     id: 5,
     category: 'Work & Social Environment',
     question: 'What environment helps you thrive?',
+    info: 'Your best environment is less about productivity and more about the conditions that let your instincts sharpen.',
     options: [
       { text: 'Clear deadlines, structured processes, and time to observe', emoji: '🏢', scores: { J: 2, P: 0, I: 2, E: 0 } },
       { text: 'Organized space with defined goals and thoughtful contribution', emoji: '📐', scores: { J: 3, P: 0, I: 1, E: 1 } },

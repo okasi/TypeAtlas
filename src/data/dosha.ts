@@ -216,6 +216,7 @@ export const doshaQuizQuestions: QuizQuestion[] = [
     id: 1,
     category: 'Body & Build',
     question: 'Which best describes your natural body frame and skin?',
+    info: 'Ayurveda reads the body as a climate map, with lightness, heat, and steadiness each leaving their trace.',
     options: [
       { text: 'Thin, light build; dry skin; difficulty gaining weight', emoji: '🌬️', scores: { vata: 3, pitta: 0, kapha: 0 } },
       { text: 'Medium build; warm skin; can gain or lose weight easily', emoji: '🔥', scores: { vata: 0, pitta: 3, kapha: 0 } },
@@ -227,6 +228,7 @@ export const doshaQuizQuestions: QuizQuestion[] = [
     id: 2,
     category: 'Energy & Digestion',
     question: 'How would you describe your typical energy and digestion?',
+    info: 'Digestion is treated as a central fire in Ayurveda, shaping mood, stamina, and how well the day lands in you.',
     options: [
       { text: 'Variable energy with bursts and crashes; irregular appetite, gas/bloating', emoji: '⚡', scores: { vata: 3, pitta: 0, kapha: 0 } },
       { text: 'Strong, focused energy; sharp digestion, strong appetite, can get heartburn', emoji: '🌶️', scores: { vata: 0, pitta: 3, kapha: 0 } },
@@ -236,19 +238,9 @@ export const doshaQuizQuestions: QuizQuestion[] = [
   },
   {
     id: 3,
-    category: 'Sleep & Stress',
-    question: 'How do you sleep and react under stress?',
-    options: [
-      { text: 'Light sleeper, difficulty falling asleep; anxious and scattered when stressed', emoji: '😰', scores: { vata: 3, pitta: 0, kapha: 0 } },
-      { text: 'Moderate sleeper, may wake up; irritable and critical when stressed', emoji: '😤', scores: { vata: 0, pitta: 3, kapha: 0 } },
-      { text: 'Deep, heavy sleeper; withdrawn and lethargic when stressed', emoji: '😴', scores: { vata: 0, pitta: 0, kapha: 3 } },
-      { text: 'Restful sleep; handle stress with composure', emoji: '😌', scores: { vata: 1, pitta: 1, kapha: 1 } }
-    ]
-  },
-  {
-    id: 4,
     category: 'Climate & Environment',
     question: 'Which climate and conditions do you feel most comfortable in?',
+    info: 'The weather you crave can mirror what your system is trying to balance.',
     options: [
       { text: 'Warm, humid climates; dislike cold, wind, and dryness', emoji: '🌴', scores: { vata: 3, pitta: 0, kapha: 0 } },
       { text: 'Cool climates; dislike heat, strong sun, and humidity', emoji: '❄️', scores: { vata: 0, pitta: 3, kapha: 0 } },
@@ -257,9 +249,10 @@ export const doshaQuizQuestions: QuizQuestion[] = [
     ]
   },
   {
-    id: 5,
+    id: 4,
     category: 'Mind & Emotions',
     question: 'Which emotional and mental patterns resonate with you most?',
+    info: 'Your mental rhythm points to the element that moves you: airy change, focused fire, or grounded calm.',
     options: [
       { text: 'Creative, enthusiastic, quick to learn but prone to worry and changeability', emoji: '🎭', scores: { vata: 3, pitta: 0, kapha: 0 } },
       { text: 'Focused, passionate, sharp intellect but can be critical and intense', emoji: '🎯', scores: { vata: 0, pitta: 3, kapha: 0 } },

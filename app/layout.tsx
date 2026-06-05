@@ -3,8 +3,8 @@ import type { ReactNode } from 'react'
 import '../src/index.css'
 
 export const metadata: Metadata = {
-  title: 'Sacred Plate',
-  description: 'Discover your personalized nutrition archetype.',
+  title: 'TypeAtlas',
+  description: 'Discover your personalized nutrition archetype with TypeAtlas.',
 }
 
 export default function RootLayout({

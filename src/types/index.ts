@@ -1,4 +1,4 @@
-// Sacred Plate - Type Definitions
+// TypeAtlas - Type Definitions
 
 export type BloodType = 'A' | 'B' | 'AB' | 'O';
 
@@ -18,11 +18,29 @@ export type MBTIType =
   | 'ESTJ' | 'ESFJ' | 'ENFJ' | 'ENTJ';
 
 export type DoshaType = 'vata' | 'pitta' | 'kapha';
+export type EnneagramType = '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9';
+export type HogwartsHouse = 'gryffindor' | 'slytherin' | 'ravenclaw' | 'hufflepuff';
+export type LoveLanguageType = 'words' | 'time' | 'gifts' | 'service' | 'touch';
+export type ChronotypeType = 'lion' | 'bear' | 'wolf' | 'dolphin';
+export type BirthstoneType =
+  | 'garnet'
+  | 'amethyst'
+  | 'aquamarine'
+  | 'diamond'
+  | 'emerald'
+  | 'pearl'
+  | 'ruby'
+  | 'peridot'
+  | 'sapphire'
+  | 'opal'
+  | 'topaz'
+  | 'turquoise';
 export type FlowView =
   | 'landing'
   | 'form'
   | 'quiz-mbti'
   | 'quiz-dosha'
+  | 'quiz-signals'
   | 'loading'
   | 'result'
   | 'mealplan'
@@ -49,12 +67,17 @@ export interface UserProfile {
   name: string;
   birthDate: string;
   birthYear: number;
-  bloodType: BloodType;
+  bloodType?: BloodType;
   westernZodiac: WesternZodiac;
   chineseZodiac: ChineseZodiac;
   mbti: MBTIType;
   dosha: DoshaScores;
   dominantDosha: DoshaType;
+  enneagram?: EnneagramType;
+  hogwartsHouse?: HogwartsHouse;
+  loveLanguage?: LoveLanguageType;
+  chronotype?: ChronotypeType;
+  birthstone?: BirthstoneType;
 }
 
 export interface ZodiacInfo {
@@ -185,6 +208,7 @@ export interface QuizQuestion {
   id: number;
   category: string;
   question: string;
+  info?: string;
   options: {
     text: string;
     emoji: string;
@@ -206,6 +230,11 @@ export interface LiveProfileSummary {
   chineseZodiac?: ChineseZodiac;
   mbti?: MBTIType;
   dominantDosha?: DoshaType;
+  enneagram?: EnneagramType;
+  hogwartsHouse?: HogwartsHouse;
+  loveLanguage?: LoveLanguageType;
+  chronotype?: ChronotypeType;
+  birthstone?: BirthstoneType;
 }
 
 export interface LiveParticipant {

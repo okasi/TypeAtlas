@@ -222,6 +222,21 @@ export function LivePresencePanel({
                     {selectedParticipant.profileSummary?.mbti && (
                       <div>MBTI: {selectedParticipant.profileSummary.mbti}</div>
                     )}
+                    {selectedParticipant.profileSummary?.enneagram && (
+                      <div>Enneagram: {selectedParticipant.profileSummary.enneagram}</div>
+                    )}
+                    {selectedParticipant.profileSummary?.hogwartsHouse && (
+                      <div>House: {selectedParticipant.profileSummary.hogwartsHouse}</div>
+                    )}
+                    {selectedParticipant.profileSummary?.loveLanguage && (
+                      <div>Love language: {selectedParticipant.profileSummary.loveLanguage}</div>
+                    )}
+                    {selectedParticipant.profileSummary?.chronotype && (
+                      <div>Chronotype: {selectedParticipant.profileSummary.chronotype}</div>
+                    )}
+                    {selectedParticipant.profileSummary?.birthstone && (
+                      <div>Birthstone: {selectedParticipant.profileSummary.birthstone}</div>
+                    )}
                     {selectedParticipant.profileSummary?.dominantDosha && (
                       <div>Dosha: {selectedParticipant.profileSummary.dominantDosha}</div>
                     )}

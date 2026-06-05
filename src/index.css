@@ -106,6 +106,57 @@
     border-radius: 18px;
     backdrop-filter: blur(10px);
   }
+
+  .landing-copy-halo {
+    position: absolute;
+    inset: -4rem -3rem -4.5rem;
+    z-index: -2;
+    border-radius: 40px;
+    background:
+      radial-gradient(circle at center, rgba(8, 10, 14, 0.48) 0%, rgba(8, 10, 14, 0.36) 34%, rgba(8, 10, 14, 0.6) 62%, transparent 82%);
+    filter: blur(14px);
+    pointer-events: none;
+  }
+
+  .landing-copy-panel {
+    position: absolute;
+    inset: -2rem -1.5rem -2.5rem;
+    z-index: -1;
+    border-radius: 32px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background:
+      radial-gradient(circle at center, rgba(11, 13, 16, 0.1) 0%, rgba(11, 13, 16, 0.22) 28%, rgba(11, 13, 16, 0.56) 72%, rgba(11, 13, 16, 0.7) 100%),
+      radial-gradient(circle at top, rgba(243, 184, 85, 0.14), transparent 48%);
+    backdrop-filter: blur(3px);
+    box-shadow:
+      0 24px 70px rgba(0, 0, 0, 0.45),
+      0 0 0 1px rgba(243, 184, 85, 0.08) inset;
+    pointer-events: none;
+  }
+
+  .hero-copy-shadow {
+    text-shadow:
+      0 3px 18px rgba(0, 0, 0, 0.92),
+      0 0 2px rgba(0, 0, 0, 0.85);
+  }
+
+  .hero-title-shadow {
+    text-shadow:
+      0 8px 28px rgba(0, 0, 0, 0.96),
+      0 0 42px rgba(243, 184, 85, 0.16);
+  }
+
+  @media (max-width: 768px) {
+    .landing-copy-halo {
+      inset: -3rem -1rem -3.5rem;
+      border-radius: 32px;
+    }
+
+    .landing-copy-panel {
+      inset: -1.25rem -0.75rem -1.75rem;
+      border-radius: 24px;
+    }
+  }
   
   .glow-gold {
     box-shadow: 0 0 40px rgba(243, 184, 85, 0.18);
@@ -171,6 +222,13 @@
     border-color: rgba(243, 184, 85, 0.5);
     box-shadow: 0 0 0 2px rgba(243, 184, 85, 0.2);
   }
+
+  .input-sacred[type='date']::-webkit-calendar-picker-indicator {
+    opacity: 0;
+    width: 0;
+    margin: 0;
+    pointer-events: none;
+  }
   
   .option-card {
     @apply p-5 rounded-xl border cursor-pointer transition-all duration-300;
@@ -186,6 +244,12 @@
   .option-card.selected {
     border-color: #F3B855;
     background-color: rgba(243, 184, 85, 0.1);
+  }
+
+  .option-card:focus-visible {
+    outline: none;
+    border-color: rgba(243, 184, 85, 0.65);
+    box-shadow: 0 0 0 2px rgba(243, 184, 85, 0.2);
   }
   
   .progress-bar {

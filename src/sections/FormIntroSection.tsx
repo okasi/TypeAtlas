@@ -8,6 +8,14 @@ interface FormIntroSectionProps {
   onBack: () => void;
 }
 
+function capitalizeFirstLetter(value: string) {
+  if (!value) {
+    return value;
+  }
+
+  return value.charAt(0).toUpperCase() + value.slice(1);
+}
+
 export function FormIntroSection({ onSubmit, onBack }: FormIntroSectionProps) {
   const [name, setName] = useState('');
   const [birthDate, setBirthDate] = useState('');
@@ -78,8 +86,8 @@ export function FormIntroSection({ onSubmit, onBack }: FormIntroSectionProps) {
           
           {/* Description */}
           <p className="text-secondary-custom mb-8 leading-relaxed">
-            We combine astrology, Ayurveda, blood type, and personality to design a plate 
-            that feels like yours. Your birth date will reveal your Western and Chinese zodiac signs.
+            We ask for your name to personalize the reading, and your birth date to calculate your
+            Western and Chinese zodiac signs.
           </p>
           
           {/* Form */}
@@ -95,7 +103,7 @@ export function FormIntroSection({ onSubmit, onBack }: FormIntroSectionProps) {
                   type="text"
                   value={name}
                   onChange={(e) => {
-                    setName(e.target.value);
+                    setName(capitalizeFirstLetter(e.target.value));
                     if (errors.name) setErrors({ ...errors, name: undefined });
                   }}
                   placeholder="Enter your first name"
@@ -149,13 +157,13 @@ export function FormIntroSection({ onSubmit, onBack }: FormIntroSectionProps) {
               whileTap={{ scale: 0.98 }}
               className="w-full btn-gold-filled mt-8"
             >
-              Start the Ritual
+              Continue to Questions
             </motion.button>
           </form>
           
           {/* Privacy note */}
           <p className="text-xs text-secondary-custom/50 text-center mt-6">
-            Your information is stored locally on your device and never shared.
+            Your details are not permanently saved in the cloud. Live mode temporarily shares your name, progress, and result with active visitors while you’re connected.
           </p>
         </div>
       </motion.div>

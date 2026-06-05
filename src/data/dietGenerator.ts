@@ -29,6 +29,12 @@ interface ScoredLabel<Source extends string> {
   concrete: boolean;
 }
 
+interface MacroProfile {
+  protein: number;
+  carbs: number;
+  fats: number;
+}
+
 const archetypePrefixesByElement = {
   fire: ['Solar', 'Radiant', 'Emberlit', 'Sunforged', 'Lionhearted'],
   earth: ['Verdant', 'Rooted', 'Harvest', 'Stoneborn', 'Golden'],
@@ -316,18 +322,20 @@ function takeRankedLabels<Source extends string>(
 
 function buildAvoidSet(profile: UserProfile): Set<string> {
   const { primary, secondary } = getDoshaBlend(profile);
+  const labels = [
+    ...doshaData[primary].foods.avoid,
+    ...doshaData[primary].foods.reduce,
+    ...doshaData[secondary].foods.avoid,
+    ...mbtiData[profile.mbti].foodsToLimit,
+    ...westernZodiacData[profile.westernZodiac].foods.limit,
+    ...chineseZodiacData[profile.chineseZodiac].foods.limit
+  ];
 
-  return new Set(
-    [
-      ...doshaData[primary].foods.avoid,
-      ...doshaData[primary].foods.reduce,
-      ...doshaData[secondary].foods.avoid,
-      ...bloodTypeData[profile.bloodType].foods.avoid,
-      ...mbtiData[profile.mbti].foodsToLimit,
-      ...westernZodiacData[profile.westernZodiac].foods.limit,
-      ...chineseZodiacData[profile.chineseZodiac].foods.limit
-    ].map(normalizeLabel)
-  );
+  if (profile.bloodType) {
+    labels.push(...bloodTypeData[profile.bloodType].foods.avoid);
+  }
+
+  return new Set(labels.map(normalizeLabel));
 }
 
 function generateArchetypeName(profile: UserProfile): string {
@@ -335,7 +343,7 @@ function generateArchetypeName(profile: UserProfile): string {
   const { primary } = getDoshaBlend(profile);
   const prefixPool = uniqueStrings([
     ...archetypePrefixesByElement[westernZodiacData[profile.westernZodiac].element],
-    ...bloodToneDescriptors[profile.bloodType]
+    ...(profile.bloodType ? bloodToneDescriptors[profile.bloodType] : [])
   ]);
   const essencePool = uniqueStrings([
     ...doshaEssences[primary],
@@ -360,50 +368,46 @@ function generateSignatureThemes(profile: UserProfile): string[] {
   const seed = getProfileSeed(profile, 'signature-themes');
   const { primary, secondary } = getDoshaBlend(profile);
   const zodiacInfo = westernZodiacData[profile.westernZodiac];
-
-  return uniqueStrings([
+  const themes = [
     pickDeterministic(doshaThemeBanks[primary], seed, 'base-theme'),
     pickDeterministic(accentThemeBanks[secondary], seed, 'accent-theme'),
     pickDeterministic(elementThemeBanks[zodiacInfo.element], seed, 'element-theme'),
     pickDeterministic(structureThemeBanks[profile.mbti[3] as keyof typeof structureThemeBanks], seed, 'structure-theme'),
     pickDeterministic(decisionThemeBanks[profile.mbti[2] as keyof typeof decisionThemeBanks], seed, 'decision-theme'),
-    pickDeterministic(socialThemeBanks[profile.mbti[0] as keyof typeof socialThemeBanks], seed, 'social-theme'),
-    pickDeterministic(bloodThemeBanks[profile.bloodType], seed, 'blood-theme')
-  ]).slice(0, 5);
+    pickDeterministic(socialThemeBanks[profile.mbti[0] as keyof typeof socialThemeBanks], seed, 'social-theme')
+  ];
+
+  if (profile.bloodType) {
+    themes.push(pickDeterministic(bloodThemeBanks[profile.bloodType], seed, 'blood-theme'));
+  }
+
+  return uniqueStrings(themes).slice(0, 5);
 }
 
 function calculateMacros(profile: UserProfile): { protein: number; carbs: number; fats: number; fiber: number; hydration: string } {
   const blend = getDoshaBlend(profile);
   const doshaMacros = doshaData[blend.primary].macros;
-  const bloodMacros = bloodTypeData[profile.bloodType].macros;
   const mbtiMacros = mbtiData[profile.mbti].macros;
   const zodiacMacros = westernZodiacData[profile.westernZodiac].macros;
   const chineseMacros = chineseElementMacros[chineseZodiacData[profile.chineseZodiac].element];
-  const koreanMacros = koreanStyleMacros[profile.bloodType];
+  const weightedMacros: Array<{ weight: number; macros: MacroProfile }> = [
+    { weight: 0.3, macros: doshaMacros },
+    { weight: 0.15, macros: mbtiMacros },
+    { weight: 0.15, macros: zodiacMacros },
+    { weight: 0.1, macros: chineseMacros }
+  ];
 
-  const protein =
-    doshaMacros.protein * 0.3 +
-    bloodMacros.protein * 0.2 +
-    mbtiMacros.protein * 0.15 +
-    zodiacMacros.protein * 0.15 +
-    chineseMacros.protein * 0.1 +
-    koreanMacros.protein * 0.1;
+  if (profile.bloodType) {
+    weightedMacros.push(
+      { weight: 0.2, macros: bloodTypeData[profile.bloodType].macros },
+      { weight: 0.1, macros: koreanStyleMacros[profile.bloodType] },
+    );
+  }
 
-  const carbs =
-    doshaMacros.carbs * 0.3 +
-    bloodMacros.carbs * 0.2 +
-    mbtiMacros.carbs * 0.15 +
-    zodiacMacros.carbs * 0.15 +
-    chineseMacros.carbs * 0.1 +
-    koreanMacros.carbs * 0.1;
-
-  const fats =
-    doshaMacros.fats * 0.3 +
-    bloodMacros.fats * 0.2 +
-    mbtiMacros.fats * 0.15 +
-    zodiacMacros.fats * 0.15 +
-    chineseMacros.fats * 0.1 +
-    koreanMacros.fats * 0.1;
+  const totalWeight = weightedMacros.reduce((sum, entry) => sum + entry.weight, 0);
+  const protein = weightedMacros.reduce((sum, entry) => sum + entry.macros.protein * (entry.weight / totalWeight), 0);
+  const carbs = weightedMacros.reduce((sum, entry) => sum + entry.macros.carbs * (entry.weight / totalWeight), 0);
+  const fats = weightedMacros.reduce((sum, entry) => sum + entry.macros.fats * (entry.weight / totalWeight), 0);
 
   const rounded = {
     protein: Math.round(protein),
@@ -461,7 +465,9 @@ function generateIngredientsToPrioritize(profile: UserProfile): string[] {
 
   addScoredLabels(scored, doshaData[blend.primary].foods.favor, 4.8, 'dosha');
   addScoredLabels(scored, doshaData[blend.secondary].foods.favor, 2.2, 'secondary-dosha');
-  addScoredLabels(scored, bloodTypeData[profile.bloodType].foods.highlyBeneficial, 4.2, 'blood');
+  if (profile.bloodType) {
+    addScoredLabels(scored, bloodTypeData[profile.bloodType].foods.highlyBeneficial, 4.2, 'blood');
+  }
   addScoredLabels(scored, mbtiData[profile.mbti].recommendedFoods, 2.5, 'mbti');
   addScoredLabels(scored, westernZodiacData[profile.westernZodiac].foods.recommended, 2.8, 'zodiac');
   addScoredLabels(scored, chineseZodiacData[profile.chineseZodiac].foods.recommended, 2.4, 'chinese');
@@ -474,7 +480,7 @@ function generateIngredientsToPrioritize(profile: UserProfile): string[] {
   const choices = [
     ...takeRankedLabels(ranked, selected, 5, entry => entry.sources.size > 1),
     ...takeRankedLabels(ranked, selected, 3, entry => entry.sources.has('zodiac') || entry.sources.has('chinese')),
-    ...takeRankedLabels(ranked, selected, 3, entry => entry.sources.has('blood')),
+    ...takeRankedLabels(ranked, selected, profile.bloodType ? 3 : 0, entry => entry.sources.has('blood')),
     ...takeRankedLabels(ranked, selected, 3, entry => entry.sources.has('dosha') || entry.sources.has('secondary-dosha')),
     ...takeRankedLabels(ranked, selected, 3, entry => entry.sources.has('spice'))
   ];
@@ -495,7 +501,9 @@ function generateFoodsToAvoid(profile: UserProfile): string[] {
   addScoredLabels(scored, doshaData[primary].foods.avoid, 4.5, 'dosha-avoid');
   addScoredLabels(scored, doshaData[primary].foods.reduce, 2.6, 'dosha-reduce');
   addScoredLabels(scored, doshaData[secondary].foods.avoid, 2.2, 'secondary-avoid');
-  addScoredLabels(scored, bloodTypeData[profile.bloodType].foods.avoid, 4.1, 'blood');
+  if (profile.bloodType) {
+    addScoredLabels(scored, bloodTypeData[profile.bloodType].foods.avoid, 4.1, 'blood');
+  }
   addScoredLabels(scored, mbtiData[profile.mbti].foodsToLimit, 3.1, 'mbti');
   addScoredLabels(scored, westernZodiacData[profile.westernZodiac].foods.limit, 2.6, 'zodiac');
   addScoredLabels(scored, chineseZodiacData[profile.chineseZodiac].foods.limit, 2.4, 'chinese');
@@ -505,7 +513,7 @@ function generateFoodsToAvoid(profile: UserProfile): string[] {
 
   const choices = [
     ...takeRankedLabels(ranked, selected, 4, entry => entry.sources.size > 1),
-    ...takeRankedLabels(ranked, selected, 2, entry => entry.sources.has('blood')),
+    ...takeRankedLabels(ranked, selected, profile.bloodType ? 2 : 0, entry => entry.sources.has('blood')),
     ...takeRankedLabels(ranked, selected, 2, entry => entry.sources.has('dosha-avoid') || entry.sources.has('secondary-avoid')),
     ...takeRankedLabels(ranked, selected, 2, entry => entry.sources.has('mbti'))
   ];
@@ -567,13 +575,19 @@ function generateNarrative(profile: UserProfile, ingredients: string[], mealRhyt
   const chineseInfo = chineseZodiacData[profile.chineseZodiac];
   const mbtiInfo = mbtiData[profile.mbti];
   const ingredientFocus = ingredients.slice(0, 4).join(', ');
+  const bloodTypeBridge = profile.bloodType
+    ? `Layer in your ${mbtiInfo.name} wiring and type ${profile.bloodType} physiology, and foods like ${ingredientFocus} start to make sense as repeat anchors rather than random recommendations.`
+    : `Layer in your ${mbtiInfo.name} wiring, and foods like ${ingredientFocus} start to make sense as repeat anchors even without a blood-type input.`;
+  const bloodTypeMethodNote = profile.bloodType
+    ? 'That extra blood-type layer sharpens the recommendation set rather than reinventing it.'
+    : 'Leaving blood type blank simply shifts more of the weighting onto the patterns that do repeat across dosha, zodiac, and personality.';
   const hybridSentence = blend.isHybrid
     ? `You are not a single-note ${doshaName.toLowerCase()} type. ${secondaryName} keeps surfacing in the background, which is why ${signatureThemes[0].toLowerCase()} and ${signatureThemes[1].toLowerCase()} both matter.`
     : `Your strongest nutritional signal is ${doshaName.toLowerCase()}, with just enough ${secondaryName.toLowerCase()} underneath to keep your plate adaptive rather than rigid.`;
   const storyVariants = [
-    `Dear ${profile.name}, your profile points toward a plate that feels distinct on purpose. ${hybridSentence}\n\n${zodiacInfo.name} adds ${zodiacInfo.traits.slice(0, 2).join(' and ').toLowerCase()} ${zodiacInfo.element} energy, while the Year of the ${chineseInfo.name} reinforces ${chineseInfo.traits.slice(0, 2).join(' and ').toLowerCase()} instincts. Layer in your ${mbtiInfo.name} wiring and type ${profile.bloodType} physiology, and foods like ${ingredientFocus} start to make sense as repeat anchors rather than random recommendations.\n\n${mealRhythm}`,
-    `Dear ${profile.name}, the interesting part of your chart is not any single label. It is the way your ${doshaName.toLowerCase()} base interacts with ${secondaryName.toLowerCase()} undertones, ${zodiacInfo.name}'s ${zodiacInfo.element} expression, and the ${chineseInfo.name}'s ${chineseInfo.traits[0].toLowerCase()} pull. Together they push you toward ${ingredientFocus} and away from flat, one-size-fits-all advice.\n\nAs a ${mbtiInfo.name}, you need food to match both temperament and function. That is why ${signatureThemes[2].toLowerCase()}, ${signatureThemes[3].toLowerCase()}, and ${signatureThemes[4].toLowerCase()} show up so clearly in your result.\n\n${mealRhythm}`,
-    `Dear ${profile.name}, your sacred plate works because several systems are agreeing from different angles. ${hybridSentence}\n\n${zodiacInfo.name} wants ${zodiacInfo.cookingStyles[0].toLowerCase()}, the ${chineseInfo.name} wants foods that support ${chineseInfo.traits[0].toLowerCase()} momentum, and your ${mbtiInfo.name} nature wants meals that feel psychologically aligned instead of merely correct. The overlap lands on ${ingredientFocus}.\n\n${mealRhythm}`
+    `Dear ${profile.name}, your profile points toward a plate that feels distinct on purpose. ${hybridSentence}\n\n${zodiacInfo.name} adds ${zodiacInfo.traits.slice(0, 2).join(' and ').toLowerCase()} ${zodiacInfo.element} energy, while the Year of the ${chineseInfo.name} reinforces ${chineseInfo.traits.slice(0, 2).join(' and ').toLowerCase()} instincts. ${bloodTypeBridge}\n\n${mealRhythm}`,
+    `Dear ${profile.name}, the interesting part of your chart is not any single label. It is the way your ${doshaName.toLowerCase()} base interacts with ${secondaryName.toLowerCase()} undertones, ${zodiacInfo.name}'s ${zodiacInfo.element} expression, and the ${chineseInfo.name}'s ${chineseInfo.traits[0].toLowerCase()} pull. Together they push you toward ${ingredientFocus} and away from flat, one-size-fits-all advice.\n\nAs a ${mbtiInfo.name}, you need food to match both temperament and function. That is why ${signatureThemes[2].toLowerCase()}, ${signatureThemes[3].toLowerCase()}, and ${signatureThemes[4].toLowerCase()} show up so clearly in your result. ${bloodTypeMethodNote}\n\n${mealRhythm}`,
+    `Dear ${profile.name}, your sacred plate works because several systems are agreeing from different angles. ${hybridSentence}\n\n${zodiacInfo.name} wants ${zodiacInfo.cookingStyles[0].toLowerCase()}, the ${chineseInfo.name} wants foods that support ${chineseInfo.traits[0].toLowerCase()} momentum, and your ${mbtiInfo.name} nature wants meals that feel psychologically aligned instead of merely correct. The overlap lands on ${ingredientFocus}. ${bloodTypeMethodNote}\n\n${mealRhythm}`
   ];
 
   return pickDeterministic(storyVariants, seed, 'narrative-template');
@@ -584,7 +598,6 @@ function generateRituals(profile: UserProfile, ingredients: string[]): string[] 
   const blend = getDoshaBlend(profile);
   const mbtiInfo = mbtiData[profile.mbti];
   const zodiacInfo = westernZodiacData[profile.westernZodiac];
-  const bloodInfo = bloodTypeData[profile.bloodType];
   const socialMeal = profile.mbti[0] === 'E' ? 'shared' : 'quiet';
 
   const primaryIngredients = ingredients.slice(0, 2).map(ingredient => ingredient.toLowerCase()).join(' and ');
@@ -598,13 +611,16 @@ function generateRituals(profile: UserProfile, ingredients: string[]): string[] 
     pitta: 'When intensity rises, lower the heat, acidity, and speed of the meal before adding more stimulation.',
     kapha: 'When heaviness builds, cut portion size slightly and add more spice, crunch, or bitterness.'
   }[blend.secondary];
+  const movementRitual = profile.bloodType
+    ? `Pair your main meal with ${pickDeterministic(bloodTypeData[profile.bloodType].exercise, seed, 'exercise').toLowerCase()} or another short movement block later in the day.`
+    : 'Pair your main meal with a short walk, mobility block, or easy strength session so energy and digestion stay in sync.';
 
   return [
     morningStart,
     `Keep ${primaryIngredients} in weekly rotation; that is where several of your systems overlap.`,
     `Use "${pickDeterministic(mbtiInfo.eatingHabits, seed, 'habit').toLowerCase()}" as your anchor habit when the week gets chaotic.`,
     `Lean on ${pickDeterministic(zodiacInfo.cookingStyles, seed, 'cooking-style').toLowerCase()} once or twice a week so the food still feels like you.`,
-    `Pair your main meal with ${pickDeterministic(bloodInfo.exercise, seed, 'exercise').toLowerCase()} or another short movement block later in the day.`,
+    movementRitual,
     `${secondaryBalance} Protect one ${socialMeal} meal each day so your body can actually register the difference.`
   ];
 }
@@ -634,7 +650,7 @@ export function generateSacredArchetype(profile: UserProfile): SacredArchetype {
 
   return {
     name: generateArchetypeName(profile),
-    title: `${profile.name}'s Sacred Plate`,
+    title: `${profile.name}'s TypeAtlas Profile`,
     description: narrative,
     narrative,
     dietStyle: generateDietStyle(profile, signatureThemes, ingredientsToPrioritize),

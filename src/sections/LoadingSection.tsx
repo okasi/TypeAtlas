@@ -74,7 +74,7 @@ export function LoadingSection() {
           transition={{ delay: 0.7, duration: 0.8 }}
           className="text-secondary-custom max-w-md mx-auto px-4"
         >
-          Mapping your stars, type, and energy into a sacred plate designed just for you.
+          Mapping your stars, type, and energy into a TypeAtlas profile personalized from your answers.
         </motion.p>
         
         {/* Animated dots */}
@@ -113,7 +113,7 @@ export function LoadingSection() {
             'Analyzing blood type patterns...',
             'Mapping personality archetypes...',
             'Harmonizing dosha energies...',
-            'Weaving your sacred plate...'
+            'Building your TypeAtlas profile...'
           ].map((step, index) => (
             <motion.p
               key={step}

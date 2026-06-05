@@ -2,11 +2,20 @@
 
 import { useState } from 'react';
 import type { FlowView, SacredArchetype, UserProfile } from '@/types';
-import { generateSacredArchetype, getWesternZodiac, getChineseZodiac, calculateMBTI, calculateDosha, getDominantDosha } from '@/data';
+import {
+  generateSacredArchetype,
+  getWesternZodiac,
+  getChineseZodiac,
+  calculateMBTI,
+  calculateDosha,
+  getDominantDosha,
+  getBirthstoneFromDate,
+} from '@/data';
 import { LivePresencePanel } from '@/components/LivePresencePanel';
 import { LandingSection } from '@/sections/LandingSection';
 import { FormIntroSection } from '@/sections/FormIntroSection';
 import { QuizSection } from '@/sections/QuizSection';
+import { AtlasSignalsSection } from '@/sections/AtlasSignalsSection';
 import { LoadingSection } from '@/sections/LoadingSection';
 import { ResultSection } from '@/sections/ResultSection';
 import { MealPlanSection } from '@/sections/MealPlanSection';
@@ -19,9 +28,29 @@ import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 
 type AppView = FlowView;
+const PROFILE_STORAGE_KEY = 'typeatlas-profile';
+const LEGACY_PROFILE_STORAGE_KEY = 'sacred-plate-profile';
+
+function readSavedProfile() {
+  const saved = localStorage.getItem(PROFILE_STORAGE_KEY);
+
+  if (saved) {
+    return saved;
+  }
+
+  const legacySaved = localStorage.getItem(LEGACY_PROFILE_STORAGE_KEY);
+
+  if (!legacySaved) {
+    return null;
+  }
+
+  localStorage.setItem(PROFILE_STORAGE_KEY, legacySaved);
+  localStorage.removeItem(LEGACY_PROFILE_STORAGE_KEY);
+  return legacySaved;
+}
 
 function loadSavedState(): { userProfile: Partial<UserProfile>; result: SacredArchetype | null } {
-  const saved = localStorage.getItem('sacred-plate-profile');
+  const saved = readSavedProfile();
 
   if (!saved) {
     return { userProfile: {}, result: null };
@@ -34,10 +63,13 @@ function loadSavedState(): { userProfile: Partial<UserProfile>; result: SacredAr
       return { userProfile: {}, result: null };
     }
 
-    const profile = parsed.profile as UserProfile;
+    const profile = {
+      ...(parsed.profile as UserProfile),
+      birthstone: parsed.profile.birthstone ?? getBirthstoneFromDate(parsed.profile.birthDate),
+    } as UserProfile;
     const refreshedResult = generateSacredArchetype(profile);
 
-    localStorage.setItem('sacred-plate-profile', JSON.stringify({
+    localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify({
       profile,
       result: refreshedResult,
       timestamp: new Date().toISOString()
@@ -65,6 +97,7 @@ function App() {
     'form': 10,
     'quiz-mbti': 30,
     'quiz-dosha': 55,
+    'quiz-signals': 72,
     'loading': 80,
     'result': 90,
     'mealplan': 95,
@@ -76,13 +109,15 @@ function App() {
       ? Math.round(15 + quizProgress.progress * 0.35)
       : currentView === 'quiz-dosha' && quizProgress
         ? Math.round(55 + quizProgress.progress * 0.25)
+        : currentView === 'quiz-signals' && quizProgress
+          ? Math.round(72 + quizProgress.progress * 0.08)
         : progress;
   const liveProgressLabel =
     currentView === 'landing'
       ? 'Browsing landing page'
       : currentView === 'form'
         ? 'Entering profile'
-        : currentView === 'quiz-mbti' || currentView === 'quiz-dosha'
+        : currentView === 'quiz-mbti' || currentView === 'quiz-dosha' || currentView === 'quiz-signals'
           ? quizProgress?.label ?? 'Answering questions'
           : currentView === 'loading'
             ? 'Generating result'
@@ -116,16 +151,17 @@ function App() {
       birthDate,
       birthYear: year,
       westernZodiac: getWesternZodiac(date),
-      chineseZodiac: getChineseZodiac(year)
+      chineseZodiac: getChineseZodiac(year),
+      birthstone: getBirthstoneFromDate(date),
     });
     
     setCurrentView('quiz-mbti');
   };
 
-  const handleMBTIComplete = (answers: number[], bloodType?: string) => {
+  const handleMBTIComplete = (answers: number[], bloodType?: UserProfile['bloodType']) => {
     setUserProfile(prev => ({ 
       ...prev, 
-      bloodType: bloodType as UserProfile['bloodType'],
+      bloodType,
       mbti: calculateMBTI(answers)
     }));
     setCurrentView('quiz-dosha');
@@ -134,30 +170,39 @@ function App() {
   const handleDoshaComplete = (answers: number[]) => {
     const doshaScores = calculateDosha(answers);
     const dominantDosha = getDominantDosha(doshaScores);
-    
+
+    setUserProfile(prev => ({
+      ...prev,
+      dosha: doshaScores,
+      dominantDosha,
+    }));
+    setCurrentView('quiz-signals');
+  };
+
+  const handleSignalsComplete = (
+    signals: Pick<UserProfile, 'enneagram' | 'hogwartsHouse' | 'loveLanguage' | 'chronotype'>,
+  ) => {
     const completeProfile: UserProfile = {
       ...userProfile as UserProfile,
-      dosha: doshaScores,
-      dominantDosha
+      ...signals,
     };
-    
+
     setUserProfile(completeProfile);
     setCurrentView('loading');
-    
-    // Generate result after a brief delay for the loading animation
+
     setTimeout(() => {
       const archetype = generateSacredArchetype(completeProfile);
       setResult(archetype);
       
       // Save to localStorage
-      localStorage.setItem('sacred-plate-profile', JSON.stringify({
+      localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify({
         profile: completeProfile,
         result: archetype,
         timestamp: new Date().toISOString()
       }));
       
       setCurrentView('result');
-    }, 3000);
+    }, 4800);
   };
 
   const handleViewMealPlan = () => {
@@ -171,7 +216,8 @@ function App() {
   const handleRestart = () => {
     setUserProfile({});
     setResult(null);
-    localStorage.removeItem('sacred-plate-profile');
+    localStorage.removeItem(PROFILE_STORAGE_KEY);
+    localStorage.removeItem(LEGACY_PROFILE_STORAGE_KEY);
     setCurrentView('landing');
   };
 
@@ -179,8 +225,8 @@ function App() {
     if (navigator.share && result) {
       try {
         await navigator.share({
-          title: `My Sacred Sync: ${result.name}`,
-          text: `I discovered my sacred archetype: ${result.name}! Find yours at Sacred Sync.`,
+          title: `My TypeAtlas Profile: ${result.name}`,
+          text: `I discovered my archetype in TypeAtlas: ${result.name}. Find yours at TypeAtlas.`,
           url: window.location.href
         });
       } catch {
@@ -200,7 +246,7 @@ function App() {
     }
 
     try {
-      toast.info('Generating your sacred sync PDF...');
+      toast.info('Generating your TypeAtlas PDF...');
       
       // Create a temporary container for PDF content
       const pdfContainer = document.createElement('div');
@@ -225,7 +271,7 @@ function App() {
 
       pdfContainer.innerHTML = `
         <div style="text-align: center; margin-bottom: 30px;">
-          <h1 style="font-family: 'Cinzel', serif; color: #F3B855; font-size: 32px; margin-bottom: 10px;">✦ SACRED SYNC ✦</h1>
+          <h1 style="font-family: 'Cinzel', serif; color: #F3B855; font-size: 32px; margin-bottom: 10px;">✦ TYPEATLAS ✦</h1>
           <p style="color: #A7B0C8; font-size: 14px;">Your Personalized Nutrition Guide</p>
         </div>
         
@@ -244,10 +290,25 @@ function App() {
               <span style="color: #A7B0C8;">Chinese Zodiac:</span> <span style="color: #F4F6FF;">${userProfile.chineseZodiac}</span>
             </div>
             <div style="background: rgba(18, 21, 28, 0.5); padding: 12px; border-radius: 8px;">
-              <span style="color: #A7B0C8;">Blood Type:</span> <span style="color: #F4F6FF;">${userProfile.bloodType}</span>
+              <span style="color: #A7B0C8;">Blood Type:</span> <span style="color: #F4F6FF;">${userProfile.bloodType ?? 'Not provided'}</span>
             </div>
             <div style="background: rgba(18, 21, 28, 0.5); padding: 12px; border-radius: 8px;">
               <span style="color: #A7B0C8;">Personality:</span> <span style="color: #F4F6FF;">${userProfile.mbti}</span>
+            </div>
+            <div style="background: rgba(18, 21, 28, 0.5); padding: 12px; border-radius: 8px;">
+              <span style="color: #A7B0C8;">Enneagram:</span> <span style="color: #F4F6FF;">${userProfile.enneagram ?? 'Skipped'}</span>
+            </div>
+            <div style="background: rgba(18, 21, 28, 0.5); padding: 12px; border-radius: 8px;">
+              <span style="color: #A7B0C8;">House:</span> <span style="color: #F4F6FF;">${userProfile.hogwartsHouse ?? 'Skipped'}</span>
+            </div>
+            <div style="background: rgba(18, 21, 28, 0.5); padding: 12px; border-radius: 8px;">
+              <span style="color: #A7B0C8;">Love Language:</span> <span style="color: #F4F6FF;">${userProfile.loveLanguage ?? 'Skipped'}</span>
+            </div>
+            <div style="background: rgba(18, 21, 28, 0.5); padding: 12px; border-radius: 8px;">
+              <span style="color: #A7B0C8;">Chronotype:</span> <span style="color: #F4F6FF;">${userProfile.chronotype ?? 'Skipped'}</span>
+            </div>
+            <div style="background: rgba(18, 21, 28, 0.5); padding: 12px; border-radius: 8px;">
+              <span style="color: #A7B0C8;">Birthstone:</span> <span style="color: #F4F6FF;">${userProfile.birthstone ?? 'Unavailable'}</span>
             </div>
           </div>
         </div>
@@ -311,7 +372,7 @@ function App() {
         
         <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid rgba(243, 184, 85, 0.2);">
           <p style="color: #F3B855; font-size: 12px; font-style: italic;">✦ ${result.insight} ✦</p>
-          <p style="color: #A7B0C8; font-size: 10px; margin-top: 12px;">Generated by Sacred Sync • ${new Date().toLocaleDateString()}</p>
+          <p style="color: #A7B0C8; font-size: 10px; margin-top: 12px;">Generated by TypeAtlas • ${new Date().toLocaleDateString()}</p>
         </div>
       `;
 
@@ -352,12 +413,12 @@ function App() {
       }
 
       // Save the PDF
-      pdf.save(`Sacred-Plate-${userProfile.name}-${result.name}.pdf`);
+      pdf.save(`TypeAtlas-${userProfile.name}-${result.name}.pdf`);
       
       // Clean up
       document.body.removeChild(pdfContainer);
       
-      toast.success('Your Sacred Plate PDF has been downloaded!');
+      toast.success('Your TypeAtlas PDF has been downloaded!');
     } catch (error) {
       console.error('PDF generation error:', error);
       toast.error('Failed to generate PDF. Please try again.');
@@ -407,6 +468,15 @@ function App() {
             userProfile={userProfile}
             onComplete={handleDoshaComplete}
             onBack={() => setCurrentView('quiz-mbti')}
+            onProgressChange={setQuizProgress}
+          />
+        )}
+
+        {currentView === 'quiz-signals' && (
+          <AtlasSignalsSection
+            userProfile={userProfile}
+            onComplete={handleSignalsComplete}
+            onBack={() => setCurrentView('quiz-dosha')}
             onProgressChange={setQuizProgress}
           />
         )}

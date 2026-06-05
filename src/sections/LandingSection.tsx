@@ -1,12 +1,24 @@
 import { motion } from 'framer-motion';
 import { SacredRings, StarField, GlowOrb } from '@/components/SacredGeometry';
-import { Sparkles } from 'lucide-react';
 
 interface LandingSectionProps {
   onStart: () => void;
   onResume?: () => void;
   hasSavedProfile?: boolean;
 }
+
+const landingFeatureChips = [
+  'Western Zodiac',
+  'Chinese Zodiac',
+  'Birthstone',
+  'Blood Type',
+  'MBTI',
+  'Ayurvedic Dosha',
+  'Enneagram',
+  'Hogwarts House',
+  'Love Language',
+  'Chronotype',
+];
 
 export function LandingSection({ onStart, onResume, hasSavedProfile = false }: LandingSectionProps) {
   return (
@@ -18,7 +30,7 @@ export function LandingSection({ onStart, onResume, hasSavedProfile = false }: L
       <StarField />
 
       {/* Sacred geometry background */}
-      <div className="absolute inset-0 flex items-center justify-center opacity-60">
+      <div className="absolute inset-0 flex items-center justify-center opacity-85 pointer-events-none">
         <SacredRings size={600} />
       </div>
 
@@ -62,31 +74,17 @@ export function LandingSection({ onStart, onResume, hasSavedProfile = false }: L
 
       {/* Main content */}
       <div className="relative z-10 text-center px-6 max-w-3xl mx-auto">
-        {/* Logo / Brand */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, ease: 'easeOut' }}
-          className="mb-8"
-        >
-          <div className="flex items-center justify-center gap-3 mb-4">
-            <Sparkles className="w-6 h-6 text-gold" />
-            <span className="font-mono text-xs uppercase tracking-[0.2em] text-secondary-custom" style={{ textShadow: '0 2px 10px rgba(0,0,0,0.8)' }}>
-              Ancient Wisdom · Modern Nutrition
-            </span>
-            <Sparkles className="w-6 h-6 text-gold" />
-          </div>
-        </motion.div>
+        <div className="landing-copy-halo" />
+        <div className="landing-copy-panel" />
 
         {/* Main headline */}
         <motion.h1
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 1, delay: 0.2, ease: 'easeOut' }}
-          className="font-heading text-5xl md:text-7xl font-semibold text-foreground mb-6 tracking-wider"
-          style={{ textShadow: '0 4px 20px rgba(0,0,0,0.9), 0 0 40px rgba(243,184,85,0.15)' }}
+          className="font-heading text-5xl md:text-7xl font-semibold text-foreground mb-6 tracking-wider hero-title-shadow"
         >
-          <span className="text-gold">SACRED</span> SYNC
+          <span className="text-gold">TYPE</span>ATLAS
         </motion.h1>
 
         {/* Tagline */}
@@ -94,10 +92,9 @@ export function LandingSection({ onStart, onResume, hasSavedProfile = false }: L
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.4, ease: 'easeOut' }}
-          className="font-heading text-xl md:text-2xl text-foreground/90 mb-4 tracking-wide"
-          style={{ textShadow: '0 3px 15px rgba(0,0,0,0.9)' }}
+          className="font-heading text-xl md:text-2xl text-foreground mb-4 tracking-wide hero-copy-shadow"
         >
-          Align Your Nature. Nourish Your Essence.
+          Understand what supports your nature.
         </motion.p>
 
         {/* Description */}
@@ -105,11 +102,11 @@ export function LandingSection({ onStart, onResume, hasSavedProfile = false }: L
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.5, ease: 'easeOut' }}
-          className="text-secondary-custom text-base md:text-lg max-w-xl mx-auto mb-10 leading-relaxed"
-          style={{ textShadow: '0 2px 12px rgba(0,0,0,0.9)' }}
+          className="text-foreground/82 text-base md:text-lg max-w-xl mx-auto mb-10 leading-relaxed hero-copy-shadow"
         >
-          Discover your personalized path to nourishment through the sacred wisdom of
-          astrology, Ayurveda, blood type science, and personality psychology.
+          Explore ancient wisdom, personality patterns, and body-type traditions,
+          with transparent sourcing that separates symbolic meaning from scientific
+          evidence.
         </motion.p>
 
         {/* CTA Button */}
@@ -123,13 +120,13 @@ export function LandingSection({ onStart, onResume, hasSavedProfile = false }: L
             onClick={onStart}
             className="btn-gold text-lg px-12 py-5"
           >
-            Begin Your Sacred Reading
+            Begin Your TypeAtlas Reading
           </button>
 
           {hasSavedProfile && onResume && (
             <button
               onClick={onResume}
-              className="text-sm font-mono uppercase tracking-[0.14em] text-secondary-custom hover:text-gold transition-colors"
+              className="text-sm font-mono uppercase tracking-[0.14em] text-foreground/72 hover:text-gold transition-colors hero-copy-shadow"
             >
               Open Your Last Result
             </button>
@@ -141,10 +138,9 @@ export function LandingSection({ onStart, onResume, hasSavedProfile = false }: L
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.8, delay: 0.9 }}
-          className="mt-6 text-sm text-secondary-custom/70"
-          style={{ textShadow: '0 2px 8px rgba(0,0,0,0.9)' }}
+          className="mt-6 text-sm text-foreground/68 hero-copy-shadow"
         >
-          Takes about 2 minutes • No signup required
+          Takes about ~6 minutes • No signup required
         </motion.p>
 
         {/* Feature pills */}
@@ -152,13 +148,12 @@ export function LandingSection({ onStart, onResume, hasSavedProfile = false }: L
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 1, ease: 'easeOut' }}
-          className="mt-12 flex flex-wrap justify-center gap-3"
+          className="mt-12 flex flex-wrap justify-center gap-2.5 md:gap-3"
         >
-          {['Western Zodiac', 'Chinese Zodiac', 'Blood Type', 'MBTI'].map((item) => (
+          {landingFeatureChips.map((item) => (
             <span
               key={item}
-              className="px-4 py-2 rounded-full text-xs font-mono uppercase tracking-wider border border-white/10 bg-white/5 text-secondary-custom"
-              style={{ textShadow: '0 1px 4px rgba(0,0,0,0.8)' }}
+              className="px-3 py-2 md:px-4 rounded-full text-[11px] md:text-xs font-mono uppercase tracking-wider border border-white/10 bg-black/20 text-foreground/76 hero-copy-shadow"
             >
               {item}
             </span>

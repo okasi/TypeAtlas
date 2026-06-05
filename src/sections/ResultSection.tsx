@@ -1,8 +1,101 @@
 import { motion } from 'framer-motion';
 import { SacredRings, GlowOrb } from '@/components/SacredGeometry';
-import type { UserProfile, SacredArchetype } from '@/types';
-import { doshaData, westernZodiacData, chineseZodiacData, mbtiData, koreanBloodTypePersonality, bloodTypeData } from '@/data';
+import { ResearchFieldGuide } from '@/components/ResearchFieldGuide';
+import type {
+  BirthstoneType,
+  ChronotypeType,
+  EnneagramType,
+  HogwartsHouse,
+  LoveLanguageType,
+  MBTIType,
+  SacredArchetype,
+  UserProfile,
+} from '@/types';
+import {
+  birthstoneLabels,
+  chronotypeLabels,
+  enneagramTypeLabels,
+  hogwartsHouseLabels,
+  loveLanguageLabels,
+  westernZodiacData,
+  chineseZodiacData,
+  mbtiData,
+  koreanBloodTypePersonality,
+  bloodTypeData,
+} from '@/data';
 import { Sparkles, ChevronRight, Leaf, Flame, Droplets, Wind, Mountain } from 'lucide-react';
+
+const cardBadgeClassName =
+  'flex h-11 w-11 items-center justify-center rounded-full border border-white/10 bg-white/5 text-2xl leading-none shadow-[0_0_24px_rgba(243,184,85,0.08)]';
+
+const enneagramSymbols: Record<EnneagramType, string> = {
+  '1': '⚖️',
+  '2': '🤝',
+  '3': '🏁',
+  '4': '🎭',
+  '5': '🔎',
+  '6': '🛡️',
+  '7': '🎈',
+  '8': '⚔️',
+  '9': '🌿',
+};
+
+const hogwartsHouseSymbols: Record<HogwartsHouse, string> = {
+  gryffindor: '🦁',
+  slytherin: '🐍',
+  ravenclaw: '🦅',
+  hufflepuff: '🦡',
+};
+
+const loveLanguageSymbols: Record<LoveLanguageType, string> = {
+  words: '💬',
+  time: '⏳',
+  gifts: '🎁',
+  service: '🛠️',
+  touch: '🤍',
+};
+
+const chronotypeSymbols: Record<ChronotypeType, string> = {
+  lion: '🦁',
+  bear: '🐻',
+  wolf: '🐺',
+  dolphin: '🐬',
+};
+
+const birthstoneSymbols: Record<BirthstoneType, string> = {
+  garnet: '🛡️',
+  amethyst: '🔮',
+  aquamarine: '🌊',
+  diamond: '💎',
+  emerald: '🍃',
+  pearl: '🐚',
+  ruby: '❤️',
+  peridot: '🌞',
+  sapphire: '🔷',
+  opal: '🌈',
+  topaz: '✨',
+  turquoise: '🌀',
+};
+
+const diplomatMbtiTypes = new Set<MBTIType>(['INFJ', 'INFP', 'ENFJ', 'ENFP']);
+const analystMbtiTypes = new Set<MBTIType>(['INTJ', 'INTP', 'ENTJ', 'ENTP']);
+const sentinelMbtiTypes = new Set<MBTIType>(['ISTJ', 'ISFJ', 'ESTJ', 'ESFJ']);
+
+function getMbtiSymbol(mbti: MBTIType) {
+  if (diplomatMbtiTypes.has(mbti)) {
+    return '✨';
+  }
+
+  if (analystMbtiTypes.has(mbti)) {
+    return '♟️';
+  }
+
+  if (sentinelMbtiTypes.has(mbti)) {
+    return '🛡️';
+  }
+
+  return '⚡';
+}
 
 interface ResultSectionProps {
   result: SacredArchetype;
@@ -11,13 +104,10 @@ interface ResultSectionProps {
 }
 
 export function ResultSection({ result, userProfile, onViewMealPlan }: ResultSectionProps) {
-  const { dominantDosha, westernZodiac, chineseZodiac, mbti, bloodType } = userProfile;
-  
-  const doshaPercentages = {
-    vata: Math.round((userProfile.dosha.vata / 15) * 100),
-    pitta: Math.round((userProfile.dosha.pitta / 15) * 100),
-    kapha: Math.round((userProfile.dosha.kapha / 15) * 100)
-  };
+  const { westernZodiac, chineseZodiac, mbti, bloodType, enneagram, hogwartsHouse, loveLanguage, chronotype, birthstone } = userProfile;
+  const bloodTypeInfo = bloodType ? bloodTypeData[bloodType] : null;
+  const bloodTypePersonality = bloodType ? koreanBloodTypePersonality[bloodType] : null;
+  const birthstoneInfo = birthstone ? birthstoneLabels[birthstone] : null;
 
   const getElementIcon = (element: string) => {
     switch (element) {
@@ -127,20 +217,31 @@ export function ResultSection({ result, userProfile, onViewMealPlan }: ResultSec
           <div className="glass-card-light p-5">
             <div className="label-mono mb-2">Blood Type</div>
             <div className="flex items-center gap-3">
-              <span className="font-heading text-3xl text-gold">{bloodType}</span>
+              <span className="font-heading text-3xl text-gold">{bloodType ?? '?'}</span>
               <div>
-                <div className="font-heading text-lg text-foreground">{koreanBloodTypePersonality[bloodType].title}</div>
-                <div className="text-xs text-secondary-custom">Korean Theory</div>
+                <div className="font-heading text-lg text-foreground">
+                  {bloodTypePersonality?.title ?? 'Not provided'}
+                </div>
+                <div className="text-xs text-secondary-custom">
+                  {bloodType ? 'Optional blood-type layer included' : 'Optional blood-type layer skipped'}
+                </div>
               </div>
             </div>
             <p className="text-xs text-secondary-custom mt-2 leading-relaxed">
-              {bloodTypeData[bloodType].traits.slice(0, 3).join(' • ')}
+              {bloodTypeInfo
+                ? bloodTypeInfo.traits.slice(0, 3).join(' • ')
+                : 'No ABO guess was made, so the reading leans harder on your other profile signals and habit patterns.'}
             </p>
           </div>
           
           {/* MBTI */}
           <div className="glass-card-light p-5">
-            <div className="label-mono mb-2">Personality Type</div>
+            <div className="flex items-start justify-between gap-3 mb-2">
+              <div className="label-mono">Personality Type</div>
+              <span className={cardBadgeClassName} aria-hidden="true">
+                {getMbtiSymbol(mbti)}
+              </span>
+            </div>
             <div>
               <div className="font-heading text-xl text-foreground">{mbti}</div>
               <div className="text-xs text-gold">{mbtiData[mbti].name}</div>
@@ -149,45 +250,90 @@ export function ResultSection({ result, userProfile, onViewMealPlan }: ResultSec
               {mbtiData[mbti].traits.slice(0, 3).join(' • ')}
             </p>
           </div>
-          
-          {/* Dosha */}
-          <div className="glass-card-light p-5 md:col-span-2 lg:col-span-1">
-            <div className="label-mono mb-2">Dosha Balance</div>
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <span className="text-xs w-12">Vata</span>
-                <div className="flex-1 h-2 bg-white/10 rounded-full overflow-hidden">
-                  <div 
-                    className="h-full bg-blue-400/70 rounded-full"
-                    style={{ width: `${doshaPercentages.vata}%` }}
-                  />
-                </div>
-                <span className="text-xs w-8 text-right">{doshaPercentages.vata}%</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-xs w-12">Pitta</span>
-                <div className="flex-1 h-2 bg-white/10 rounded-full overflow-hidden">
-                  <div 
-                    className="h-full bg-orange-400/70 rounded-full"
-                    style={{ width: `${doshaPercentages.pitta}%` }}
-                  />
-                </div>
-                <span className="text-xs w-8 text-right">{doshaPercentages.pitta}%</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-xs w-12">Kapha</span>
-                <div className="flex-1 h-2 bg-white/10 rounded-full overflow-hidden">
-                  <div 
-                    className="h-full bg-green-400/70 rounded-full"
-                    style={{ width: `${doshaPercentages.kapha}%` }}
-                  />
-                </div>
-                <span className="text-xs w-8 text-right">{doshaPercentages.kapha}%</span>
-              </div>
+
+          <div className="glass-card-light p-5">
+            <div className="flex items-start justify-between gap-3 mb-2">
+              <div className="label-mono">Enneagram</div>
+              <span className={cardBadgeClassName} aria-hidden="true">
+                {enneagram ? enneagramSymbols[enneagram] : '◎'}
+              </span>
             </div>
-            <div className="mt-2 text-xs text-gold">
-              Dominant: {doshaData[dominantDosha].name} ({doshaData[dominantDosha].elements})
+            <div className="font-heading text-lg text-foreground">
+              {enneagram ? enneagramTypeLabels[enneagram].name : 'Skipped'}
             </div>
+            <p className="text-xs text-secondary-custom mt-2 leading-relaxed">
+              {enneagram
+                ? enneagramTypeLabels[enneagram].description
+                : 'Not every reflective framework needs a forced label, so this stayed blank.'}
+            </p>
+          </div>
+
+          <div className="glass-card-light p-5">
+            <div className="flex items-start justify-between gap-3 mb-2">
+              <div className="label-mono">Hogwarts House</div>
+              <span className={cardBadgeClassName} aria-hidden="true">
+                {hogwartsHouse ? hogwartsHouseSymbols[hogwartsHouse] : '🏰'}
+              </span>
+            </div>
+            <div className="font-heading text-lg text-foreground">
+              {hogwartsHouse ? hogwartsHouseLabels[hogwartsHouse].name : 'Skipped'}
+            </div>
+            <p className="text-xs text-secondary-custom mt-2 leading-relaxed">
+              {hogwartsHouse
+                ? hogwartsHouseLabels[hogwartsHouse].description
+                : 'House stayed optional, so TypeAtlas did not invent a fandom identity for you.'}
+            </p>
+          </div>
+
+          <div className="glass-card-light p-5">
+            <div className="flex items-start justify-between gap-3 mb-2">
+              <div className="label-mono">Love Language</div>
+              <span className={cardBadgeClassName} aria-hidden="true">
+                {loveLanguage ? loveLanguageSymbols[loveLanguage] : '♡'}
+              </span>
+            </div>
+            <div className="font-heading text-lg text-foreground">
+              {loveLanguage ? loveLanguageLabels[loveLanguage].name : 'Skipped'}
+            </div>
+            <p className="text-xs text-secondary-custom mt-2 leading-relaxed">
+              {loveLanguage
+                ? loveLanguageLabels[loveLanguage].description
+                : 'This stayed blank, so TypeAtlas leaves it as an open communication preference rather than a type.'}
+            </p>
+          </div>
+
+          <div className="glass-card-light p-5">
+            <div className="flex items-start justify-between gap-3 mb-2">
+              <div className="label-mono">Chronotype</div>
+              <span className={cardBadgeClassName} aria-hidden="true">
+                {chronotype ? chronotypeSymbols[chronotype] : '☾'}
+              </span>
+            </div>
+            <div className="font-heading text-lg text-foreground">
+              {chronotype ? chronotypeLabels[chronotype].name : 'Skipped'}
+            </div>
+            <p className="text-xs text-secondary-custom mt-2 leading-relaxed">
+              {chronotype
+                ? chronotypeLabels[chronotype].description
+                : 'Chronotype stayed optional, so your timing pattern was left unspecified.'}
+            </p>
+          </div>
+
+          <div className="glass-card-light p-5">
+            <div className="flex items-start justify-between gap-3 mb-2">
+              <div className="label-mono">Birthstone</div>
+              <span className={cardBadgeClassName} aria-hidden="true">
+                {birthstone ? birthstoneSymbols[birthstone] : '💠'}
+              </span>
+            </div>
+            <div className="font-heading text-lg text-foreground">
+              {birthstoneInfo ? `${birthstoneInfo.month} - ${birthstoneInfo.name}` : 'Unavailable'}
+            </div>
+            <p className="text-xs text-secondary-custom mt-2 leading-relaxed">
+              {birthstoneInfo
+                ? birthstoneInfo.description
+                : 'Birthstone is normally derived from birth month and used as a symbolic identity marker.'}
+            </p>
           </div>
         </motion.div>
 
@@ -198,33 +344,22 @@ export function ResultSection({ result, userProfile, onViewMealPlan }: ResultSec
           transition={{ duration: 0.8, delay: 0.3 }}
           className="glass-card p-6 md:p-8 mb-10"
         >
-          <h3 className="font-heading text-xl text-foreground mb-6">How Each Factor Shapes Your Sacred Sync</h3>
+          <h3 className="font-heading text-xl text-foreground mb-6">How Each Factor Shapes Your TypeAtlas Profile</h3>
           
           <div className="space-y-5">
-            {/* Dosha influence */}
-            <div className="flex gap-4">
-              <div className="w-10 h-10 rounded-full bg-gold/10 flex items-center justify-center flex-shrink-0">
-                <span className="text-gold text-lg">✦</span>
-              </div>
-              <div>
-                <h4 className="font-heading text-gold text-sm mb-1">Your {doshaData[dominantDosha].name} Dosha (30% influence)</h4>
-                <p className="text-secondary-custom text-sm leading-relaxed">
-                  As a {doshaData[dominantDosha].name}-dominant individual, your body thrives on {doshaData[dominantDosha].foods.favor.slice(0, 3).join(', ')}. 
-                  Your {doshaData[dominantDosha].qualities.slice(0, 3).join(', ')} nature calls for {doshaData[dominantDosha].mealTiming.toLowerCase()}.
-                </p>
-              </div>
-            </div>
-
             {/* Blood Type influence */}
             <div className="flex gap-4">
               <div className="w-10 h-10 rounded-full bg-gold/10 flex items-center justify-center flex-shrink-0">
                 <span className="text-gold text-lg">🩸</span>
               </div>
               <div>
-                <h4 className="font-heading text-gold text-sm mb-1">Your Type {bloodType} Blood (20% influence)</h4>
+                <h4 className="font-heading text-gold text-sm mb-1">
+                  {bloodType ? `Your Type ${bloodType} Blood` : 'Blood Type Input'}
+                </h4>
                 <p className="text-secondary-custom text-sm leading-relaxed">
-                  Type {bloodType} individuals benefit most from {bloodTypeData[bloodType].foods.highlyBeneficial.slice(0, 3).join(', ')}. 
-                  Your {koreanBloodTypePersonality[bloodType].traits.slice(0, 2).join(', ')} personality aligns with {bloodTypeData[bloodType].exercise.slice(0, 2).join(' and ')}.
+                  {bloodTypeInfo && bloodTypePersonality
+                    ? `When supplied, Type ${bloodType} adds a low-confidence ABO layer built from popular diet and Korean personality lore. That nudges foods like ${bloodTypeInfo.foods.highlyBeneficial.slice(0, 3).join(', ')} upward and pairs well with ${bloodTypeInfo.exercise.slice(0, 2).join(' and ')}.`
+                    : 'You left ABO blank, so TypeAtlas did not invent a category. Instead, it leaned more heavily on the other signals you actually gave us.'}
                 </p>
               </div>
             </div>
@@ -235,7 +370,7 @@ export function ResultSection({ result, userProfile, onViewMealPlan }: ResultSec
                 <span className="text-gold text-lg">🧠</span>
               </div>
               <div>
-                <h4 className="font-heading text-gold text-sm mb-1">Your {mbti} Personality (15% influence)</h4>
+                <h4 className="font-heading text-gold text-sm mb-1">Your {mbti} Personality</h4>
                 <p className="text-secondary-custom text-sm leading-relaxed">
                   As {mbtiData[mbti].name}, you naturally {mbtiData[mbti].eatingHabits[0].toLowerCase()}. 
                   Your ideal approach: {mbtiData[mbti].dietStyle}
@@ -249,7 +384,7 @@ export function ResultSection({ result, userProfile, onViewMealPlan }: ResultSec
                 <span className="text-gold text-lg">☉</span>
               </div>
               <div>
-                <h4 className="font-heading text-gold text-sm mb-1">Your {westernZodiacData[westernZodiac].name} Sun Sign (15% influence)</h4>
+                <h4 className="font-heading text-gold text-sm mb-1">Your {westernZodiacData[westernZodiac].name} Sun Sign</h4>
                 <p className="text-secondary-custom text-sm leading-relaxed">
                   Born under the {westernZodiacData[westernZodiac].element} sign of {westernZodiacData[westernZodiac].name}, 
                   you resonate with {westernZodiacData[westernZodiac].foods.recommended.slice(0, 3).join(', ')}. 
@@ -264,7 +399,7 @@ export function ResultSection({ result, userProfile, onViewMealPlan }: ResultSec
                 <span className="text-gold text-lg">🐉</span>
               </div>
               <div>
-                <h4 className="font-heading text-gold text-sm mb-1">Your Year of the {chineseZodiacData[chineseZodiac].name} (10% influence)</h4>
+                <h4 className="font-heading text-gold text-sm mb-1">Your Year of the {chineseZodiacData[chineseZodiac].name}</h4>
                 <p className="text-secondary-custom text-sm leading-relaxed">
                   The {chineseZodiacData[chineseZodiac].element} {chineseZodiacData[chineseZodiac].name} brings {chineseZodiacData[chineseZodiac].traits.slice(0, 2).join(' and ')} energy to your nutrition. 
                   You benefit from {chineseZodiacData[chineseZodiac].foods.recommended.slice(0, 3).join(', ')}.
@@ -272,34 +407,32 @@ export function ResultSection({ result, userProfile, onViewMealPlan }: ResultSec
               </div>
             </div>
 
-            {/* Korean Blood Type influence */}
-            <div className="flex gap-4">
-              <div className="w-10 h-10 rounded-full bg-gold/10 flex items-center justify-center flex-shrink-0">
-                <span className="text-gold text-lg">🇰🇷</span>
+            {bloodTypeInfo && bloodTypePersonality && (
+              <div className="flex gap-4">
+                <div className="w-10 h-10 rounded-full bg-gold/10 flex items-center justify-center flex-shrink-0">
+                  <span className="text-gold text-lg">🇰🇷</span>
+                </div>
+                <div>
+                  <h4 className="font-heading text-gold text-sm mb-1">Your Korean Blood Type Profile</h4>
+                  <p className="text-secondary-custom text-sm leading-relaxed">
+                    In Korean pop theory, Type {bloodType} maps to the {bloodTypePersonality.title}. That points toward a
+                    {` ${bloodTypePersonality.traits.slice(0, 3).join(', ').toLowerCase()} `}
+                    style and keeps
+                    {` ${bloodTypePersonality.career.split(' ').slice(0, 5).join(' ').toLowerCase()} `}
+                    in the background of the reading.
+                  </p>
+                </div>
               </div>
-              <div>
-                <h4 className="font-heading text-gold text-sm mb-1">Your Korean Blood Type Profile (10% influence)</h4>
-                <p className="text-secondary-custom text-sm leading-relaxed">
-                  In Korean theory, Type {bloodType} represents the {koreanBloodTypePersonality[bloodType].title}. 
-                  Your {koreanBloodTypePersonality[bloodType].traits.slice(0, 3).join(', ')} nature 
-                  thrives in {koreanBloodTypePersonality[bloodType].career.split(' ').slice(0, 5).join(' ')}...
-                </p>
-              </div>
-            </div>
+            )}
           </div>
         </motion.div>
 
-        {/* Narrative */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.4 }}
-          className="glass-card p-6 md:p-8 mb-10"
         >
-          <h3 className="font-heading text-xl text-foreground mb-4">Your Sacred Story</h3>
-          <p className="text-secondary-custom leading-relaxed whitespace-pre-line">
-            {result.narrative}
-          </p>
+          <ResearchFieldGuide userProfile={userProfile} />
         </motion.div>
         
         {/* Macros */}
@@ -358,7 +491,7 @@ export function ResultSection({ result, userProfile, onViewMealPlan }: ResultSec
             className="btn-gold-filled inline-flex items-center gap-3"
           >
             <Leaf className="w-5 h-5" />
-            <span>View Your Sacred Ingredients</span>
+            <span>View Suggested Ingredients</span>
             <ChevronRight className="w-5 h-5" />
           </button>
         </motion.div>

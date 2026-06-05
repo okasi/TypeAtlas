@@ -1,9 +1,27 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { SacredRings, GlowOrb } from '@/components/SacredGeometry';
 import { ChevronLeft } from 'lucide-react';
 import { mbtiQuizQuestions, doshaQuizQuestions } from '@/data';
+import { useArrowOptionNavigation } from '@/hooks/use-arrow-option-navigation';
 import type { BloodType } from '@/types';
+
+type BloodTypeSelection = BloodType | 'unknown';
+
+const stepCardVariants = {
+  enter: (direction: number) => ({
+    opacity: 0,
+    x: direction > 0 ? 48 : -48,
+  }),
+  center: {
+    opacity: 1,
+    x: 0,
+  },
+  exit: (direction: number) => ({
+    opacity: 0,
+    x: direction > 0 ? -48 : 48,
+  }),
+};
 
 interface QuizSectionProps {
   type: 'mbti' | 'dosha';
@@ -12,7 +30,7 @@ interface QuizSectionProps {
     birthDate: string;
     bloodType: BloodType;
   }>;
-  onComplete: (answers: number[], bloodType?: string) => void;
+  onComplete: (answers: number[], bloodType?: BloodType) => void;
   onBack: () => void;
   onProgressChange?: (details: { progress: number; label: string }) => void;
 }
@@ -21,17 +39,34 @@ const AUTO_ADVANCE_DELAY = 377; // milliseconds
 
 export function QuizSection({ type, userProfile, onComplete, onBack, onProgressChange }: QuizSectionProps) {
   const [currentStep, setCurrentStep] = useState(0);
+  const [direction, setDirection] = useState<1 | -1>(1);
   const [answers, setAnswers] = useState<number[]>([]);
-  const [selectedBloodType, setSelectedBloodType] = useState<BloodType | null>(userProfile.bloodType || null);
+  const [selectedBloodType, setSelectedBloodType] = useState<BloodTypeSelection | null>(userProfile.bloodType ?? null);
   const [isTransitioning, setIsTransitioning] = useState(false);
+  const selectionLockRef = useRef(false);
   
   const questions = type === 'mbti' ? mbtiQuizQuestions : doshaQuizQuestions;
   const totalSteps = type === 'mbti' ? questions.length + 1 : questions.length; // +1 for blood type selection in MBTI
   const isBloodTypeStep = type === 'mbti' && currentStep === 0;
   const questionIndex = type === 'mbti' ? currentStep - 1 : currentStep;
   const currentQuestion = questions[questionIndex];
+  const bloodTypeOptions: BloodTypeSelection[] = ['A', 'B', 'AB', 'O', 'unknown'];
+  const selectedBloodTypeIndex = selectedBloodType ? bloodTypeOptions.indexOf(selectedBloodType) : -1;
+  const selectedAnswerIndex = isBloodTypeStep ? -1 : answers[questionIndex] ?? -1;
   
   const progress = ((currentStep + 1) / totalSteps) * 100;
+
+  const { setOptionRef: setBloodTypeOptionRef } = useArrowOptionNavigation({
+    enabled: isBloodTypeStep && !isTransitioning,
+    optionCount: bloodTypeOptions.length,
+    selectedIndex: selectedBloodTypeIndex,
+  });
+
+  const { setOptionRef: setQuestionOptionRef } = useArrowOptionNavigation({
+    enabled: !isBloodTypeStep && !isTransitioning,
+    optionCount: currentQuestion?.options.length ?? 0,
+    selectedIndex: selectedAnswerIndex,
+  });
 
   useEffect(() => {
     if (!onProgressChange) {
@@ -52,21 +87,26 @@ export function QuizSection({ type, userProfile, onComplete, onBack, onProgressC
     });
   }, [currentStep, isBloodTypeStep, onProgressChange, progress, questionIndex, questions.length, totalSteps, type]);
 
-  const handleBloodTypeSelect = (bloodType: BloodType) => {
-    if (isTransitioning) return;
+  function handleBloodTypeSelect(bloodType: BloodTypeSelection) {
+    if (isTransitioning || selectionLockRef.current) return;
+    selectionLockRef.current = true;
+    setDirection(1);
     setSelectedBloodType(bloodType);
     // Auto-advance after delay
     setTimeout(() => {
       setIsTransitioning(true);
       setTimeout(() => {
         setCurrentStep(1);
+        selectionLockRef.current = false;
         setIsTransitioning(false);
       }, AUTO_ADVANCE_DELAY);
     }, 50);
-  };
+  }
 
-  const handleAnswerSelect = (optionIndex: number) => {
-    if (isTransitioning) return;
+  function handleAnswerSelect(optionIndex: number) {
+    if (isTransitioning || selectionLockRef.current) return;
+    selectionLockRef.current = true;
+    setDirection(1);
     const newAnswers = [...answers];
     newAnswers[questionIndex] = optionIndex;
     setAnswers(newAnswers);
@@ -76,26 +116,33 @@ export function QuizSection({ type, userProfile, onComplete, onBack, onProgressC
       setTimeout(() => {
         if (currentStep < totalSteps - 1) {
           setCurrentStep(currentStep + 1);
+          selectionLockRef.current = false;
           setIsTransitioning(false);
         } else {
           if (type === 'mbti') {
-            onComplete(newAnswers, selectedBloodType!);
+            onComplete(
+              newAnswers,
+              selectedBloodType && selectedBloodType !== 'unknown'
+                ? selectedBloodType
+                : undefined,
+            );
           } else {
             onComplete(newAnswers);
           }
         }
       }, AUTO_ADVANCE_DELAY);
     }, 50);
-  };
+  }
 
-  const handleBack = () => {
-    if (isTransitioning) return;
+  function handleBack() {
+    if (isTransitioning || selectionLockRef.current) return;
     if (currentStep > 0) {
+      setDirection(-1);
       setCurrentStep(currentStep - 1);
     } else {
       onBack();
     }
-  };
+  }
 
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden py-20">
@@ -143,13 +190,15 @@ export function QuizSection({ type, userProfile, onComplete, onBack, onProgressC
           />
         </div>
         
-        <AnimatePresence mode="wait">
+        <AnimatePresence mode="wait" custom={direction}>
           {isBloodTypeStep ? (
             <motion.div
               key="bloodtype"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
+              custom={direction}
+              variants={stepCardVariants}
+              initial="enter"
+              animate="center"
+              exit="exit"
               transition={{ duration: 0.4 }}
               className="glass-card p-8 md:p-10"
             >
@@ -158,15 +207,24 @@ export function QuizSection({ type, userProfile, onComplete, onBack, onProgressC
                 What is your blood type?
               </h2>
               <p className="text-secondary-custom mb-8">
-                Your blood type influences your optimal diet and exercise patterns according to both 
-                Western and Korean blood type theories.
+                In East Asian pop culture, blood type is often treated like a mini personality lens; if you know yours, we will weave it into the reading.
               </p>
               
               {/* Blood type options */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div
+                className="grid grid-cols-2 md:grid-cols-5 gap-4"
+                role="radiogroup"
+                aria-label="Blood type selection"
+              >
                 {(['A', 'B', 'AB', 'O'] as BloodType[]).map((type) => (
                   <motion.button
                     key={type}
+                    ref={(node) => {
+                      setBloodTypeOptionRef(bloodTypeOptions.indexOf(type), node);
+                    }}
+                    type="button"
+                    role="radio"
+                    aria-checked={selectedBloodType === type}
                     whileHover={{ scale: isTransitioning ? 1 : 1.05 }}
                     whileTap={{ scale: isTransitioning ? 1 : 0.95 }}
                     onClick={() => handleBloodTypeSelect(type)}
@@ -181,14 +239,35 @@ export function QuizSection({ type, userProfile, onComplete, onBack, onProgressC
                     </span>
                   </motion.button>
                 ))}
+                <motion.button
+                  key="unknown"
+                  ref={(node) => {
+                    setBloodTypeOptionRef(bloodTypeOptions.indexOf('unknown'), node);
+                  }}
+                  type="button"
+                  role="radio"
+                  aria-checked={selectedBloodType === 'unknown'}
+                  whileHover={{ scale: isTransitioning ? 1 : 1.05 }}
+                  whileTap={{ scale: isTransitioning ? 1 : 0.95 }}
+                  onClick={() => handleBloodTypeSelect('unknown')}
+                  disabled={isTransitioning}
+                  className={`option-card py-8 text-center transition-all ${selectedBloodType === 'unknown' ? 'selected ring-2 ring-gold' : ''} ${isTransitioning ? 'opacity-70' : ''}`}
+                >
+                  <div className="text-4xl font-heading text-gold mb-3">?</div>
+                  <div className="text-sm uppercase tracking-[0.18em] text-secondary-custom">
+                    Don&apos;t know
+                  </div>
+                </motion.button>
               </div>
             </motion.div>
           ) : (
             <motion.div
               key={`question-${questionIndex}`}
-              initial={{ opacity: 0, x: 50 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -50 }}
+              custom={direction}
+              variants={stepCardVariants}
+              initial="enter"
+              animate="center"
+              exit="exit"
               transition={{ duration: 0.4 }}
               className="glass-card p-8 md:p-10"
             >
@@ -196,15 +275,26 @@ export function QuizSection({ type, userProfile, onComplete, onBack, onProgressC
               <div className="label-mono mb-4">{currentQuestion.category}</div>
               
               {/* Question */}
-              <h2 className="font-heading text-xl md:text-2xl text-foreground mb-8">
+              <h2 className="font-heading text-xl md:text-2xl text-foreground mb-4">
                 {currentQuestion.question}
               </h2>
+              {currentQuestion.info && (
+                <p className="text-secondary-custom mb-8">
+                  {currentQuestion.info}
+                </p>
+              )}
               
               {/* Options */}
-              <div className="space-y-3">
+              <div className="space-y-3" role="radiogroup" aria-label={currentQuestion.question}>
                 {currentQuestion.options.map((option, index) => (
                   <motion.button
                     key={index}
+                    ref={(node) => {
+                      setQuestionOptionRef(index, node);
+                    }}
+                    type="button"
+                    role="radio"
+                    aria-checked={answers[questionIndex] === index}
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: index * 0.08 }}

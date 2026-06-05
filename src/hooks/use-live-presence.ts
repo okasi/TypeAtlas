@@ -7,7 +7,8 @@ import type {
   UserProfile,
 } from '@/types';
 
-const SESSION_STORAGE_KEY = 'sacred-plate-live-session-id';
+const SESSION_STORAGE_KEY = 'typeatlas-live-session-id';
+const LEGACY_SESSION_STORAGE_KEY = 'sacred-plate-live-session-id';
 const HEARTBEAT_MS = 10_000;
 
 interface UseLivePresenceOptions {
@@ -27,6 +28,14 @@ function getSessionId() {
 
   if (existing) {
     return existing;
+  }
+
+  const legacy = window.sessionStorage.getItem(LEGACY_SESSION_STORAGE_KEY);
+
+  if (legacy) {
+    window.sessionStorage.setItem(SESSION_STORAGE_KEY, legacy);
+    window.sessionStorage.removeItem(LEGACY_SESSION_STORAGE_KEY);
+    return legacy;
   }
 
   const created =
@@ -65,6 +74,11 @@ function buildPayload({
           chineseZodiac: userProfile.chineseZodiac,
           mbti: userProfile.mbti,
           dominantDosha: userProfile.dominantDosha,
+          enneagram: userProfile.enneagram,
+          hogwartsHouse: userProfile.hogwartsHouse,
+          loveLanguage: userProfile.loveLanguage,
+          chronotype: userProfile.chronotype,
+          birthstone: userProfile.birthstone,
         }
       : null,
   };
