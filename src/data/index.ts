@@ -5,3 +5,4 @@ export * from './dosha';
 export * from './dietGenerator';
 export * from './researchNotes';
 export * from './atlasSignals';
+export * from './evidenceInsights';

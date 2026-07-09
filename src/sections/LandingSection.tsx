@@ -18,6 +18,7 @@ const landingFeatureChips = [
   'Hogwarts House',
   'Love Language',
   'Chronotype',
+  'Evidence-Based Insights',
 ];
 
 export function LandingSection({ onStart, onResume, hasSavedProfile = false }: LandingSectionProps) {
