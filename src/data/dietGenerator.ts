@@ -636,7 +636,7 @@ function generateNarrative(profile: UserProfile, ingredients: string[], mealRhyt
   const mbtiInfo = mbtiData[profile.mbti];
   const ingredientFocus = ingredients.slice(0, 4).join(', ');
   const bloodTypeBridge = profile.bloodType
-    ? `Layer in your ${mbtiInfo.name} wiring and type ${profile.bloodType} physiology, and foods like ${ingredientFocus} start to make sense as repeat anchors rather than random recommendations.`
+    ? `Layer in your ${mbtiInfo.name} wiring and the type ${profile.bloodType} folklore layer, and foods like ${ingredientFocus} start to make sense as repeat anchors rather than random recommendations.`
     : `Layer in your ${mbtiInfo.name} wiring, and foods like ${ingredientFocus} start to make sense as repeat anchors even without a blood-type input.`;
   const bloodTypeMethodNote = profile.bloodType
     ? 'That extra blood-type layer sharpens the recommendation set rather than reinventing it.'

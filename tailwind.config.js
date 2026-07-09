@@ -7,6 +7,7 @@ const config = {
   theme: {
     extend: {
       colors: {
+        gold: "#F3B855",
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",

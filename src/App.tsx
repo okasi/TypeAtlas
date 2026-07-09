@@ -684,7 +684,7 @@ function App() {
       }));
 
       setCurrentView('result');
-    }, 4800);
+    }, 2600);
 
     return () => window.clearTimeout(timer);
   }, [currentView, userProfile]);

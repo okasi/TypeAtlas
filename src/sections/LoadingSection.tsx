@@ -125,10 +125,10 @@ export function LoadingSection({ onBack }: LoadingSectionProps) {
           className="mt-12 space-y-2"
         >
           {[
-            'Calculating zodiac alignments...',
-            'Analyzing blood type patterns...',
-            'Mapping personality archetypes...',
-            'Harmonizing dosha energies...',
+            'Mapping your symbolic layers...',
+            'Scoring your self-reported signals...',
+            'Matching research-backed insights...',
+            'Sorting evidence from tradition...',
             'Building your TypeAtlas profile...'
           ].map((step, index) => (
             <motion.p
@@ -136,8 +136,8 @@ export function LoadingSection({ onBack }: LoadingSectionProps) {
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: [0, 1, 0.5], x: 0 }}
               transition={{
-                delay: 1.5 + index * 0.4,
-                duration: 1,
+                delay: 0.7 + index * 0.35,
+                duration: 0.8,
                 times: [0, 0.3, 1]
               }}
               className="text-xs font-mono uppercase tracking-wider text-secondary-custom/60"
