@@ -1,6 +1,7 @@
 import type { BloodType, DoshaType, SacredArchetype, UserProfile } from '@/types';
 import { bloodTypeData } from './bloodType';
 import { doshaData } from './dosha';
+import { getAgeFromBirthDate } from './evidenceInsights';
 import { mbtiData } from './mbti';
 import { chineseZodiacData, westernZodiacData } from './zodiac';
 
@@ -27,12 +28,6 @@ interface ScoredLabel<Source extends string> {
   score: number;
   sources: Set<Source>;
   concrete: boolean;
-}
-
-interface MacroProfile {
-  protein: number;
-  carbs: number;
-  fats: number;
 }
 
 const archetypePrefixesByElement = {
@@ -163,20 +158,125 @@ const introBloodThemeBanks: Record<BloodType, string[]> = {
   O: ['Driven stamina', 'Bold resilience', 'Steady recovery']
 };
 
-const chineseElementMacros = {
-  water: { protein: 24, carbs: 48, fats: 28 },
-  earth: { protein: 27, carbs: 42, fats: 31 },
-  wood: { protein: 26, carbs: 46, fats: 28 },
-  fire: { protein: 29, carbs: 42, fats: 29 },
-  metal: { protein: 28, carbs: 43, fats: 29 }
-} as const;
+// Foods whose recommendation quietly tracks well-supported dietary patterns
+// (fiber, plant diversity, unsaturated fats, fermented foods, fish). These get
+// a ranking bonus so they surface first regardless of which system suggested them.
+const alignedFoodPatterns = [
+  'leafy greens',
+  'greens',
+  'spinach',
+  'kale',
+  'broccoli',
+  'vegetable',
+  'cucumber',
+  'berry',
+  'berries',
+  'apple',
+  'pear',
+  'banana',
+  'grape',
+  'melon',
+  'citrus',
+  'lemon',
+  'lime',
+  'fig',
+  'plum',
+  'pineapple',
+  'fruit',
+  'legume',
+  'lentil',
+  'bean',
+  'chickpea',
+  'oat',
+  'barley',
+  'millet',
+  'quinoa',
+  'whole grain',
+  'ancient grain',
+  'fish',
+  'salmon',
+  'sardine',
+  'cod',
+  'halibut',
+  'olive oil',
+  'yogurt',
+  'kefir',
+  'tofu',
+  'tempeh',
+  'soy',
+  'green tea',
+  'nut',
+  'walnut',
+  'seed',
+  'herb'
+];
 
-const koreanStyleMacros: Record<BloodType, { protein: number; carbs: number; fats: number }> = {
-  A: { protein: 23, carbs: 51, fats: 26 },
-  B: { protein: 27, carbs: 46, fats: 27 },
-  AB: { protein: 25, carbs: 48, fats: 27 },
-  O: { protein: 31, carbs: 41, fats: 28 }
-};
+// Foods that folklore systems blacklist but that hold up well in practice
+// (whole grains, legumes, nightshades, cruciferous vegetables, fermented dairy).
+// These never reach the avoid list unless they also match a limit pattern.
+const protectedFoodPatterns = [
+  'whole grain',
+  'wheat',
+  'corn',
+  'buckwheat',
+  'legume',
+  'lentil',
+  'bean',
+  'chickpea',
+  'peanut',
+  'tomato',
+  'eggplant',
+  'pepper',
+  'cabbage',
+  'cauliflower',
+  'brussels sprout',
+  'mustard greens',
+  'orange',
+  'tangerine',
+  'citrus',
+  'dairy',
+  'milk',
+  'cheese',
+  'yogurt',
+  'egg',
+  'chicken',
+  'turkey',
+  'shellfish',
+  'fish',
+  'sesame',
+  'nut',
+  'seed',
+  'soy',
+  'tofu'
+];
+
+// Items with genuine support for limiting; these rise in the avoid ranking.
+const limitFoodPatterns = [
+  'processed',
+  'fried',
+  'sugar',
+  'sugary',
+  'sweetened',
+  'soda',
+  'alcohol',
+  'ice cream',
+  'dessert',
+  'candy',
+  'trans fat',
+  'fast food',
+  'excessive salt',
+  'excess salt',
+  'too much salt',
+  'refined',
+  'cured',
+  'empty calorie',
+  'red meat'
+];
+
+function matchesAnyPattern(label: string, patterns: readonly string[]): boolean {
+  const normalized = normalizeLabel(label);
+  return patterns.some(pattern => new RegExp(`\\b${pattern}(s|es)?\\b`).test(normalized));
+}
 
 const abstractFoodTerms = [
   'meal',
@@ -361,6 +461,10 @@ function takeRankedLabels<Source extends string>(
   return picks;
 }
 
+function isDefensibleAvoid(label: string): boolean {
+  return matchesAnyPattern(label, limitFoodPatterns) || !matchesAnyPattern(label, protectedFoodPatterns);
+}
+
 function buildAvoidSet(profile: UserProfile): Set<string> {
   const { primary, secondary } = getDoshaBlend(profile);
   const labels = [
@@ -376,7 +480,7 @@ function buildAvoidSet(profile: UserProfile): Set<string> {
     labels.push(...bloodTypeData[profile.bloodType].foods.avoid);
   }
 
-  return new Set(labels.map(normalizeLabel));
+  return new Set(labels.filter(isDefensibleAvoid).map(normalizeLabel));
 }
 
 function generateArchetypeName(profile: UserProfile): string {
@@ -445,74 +549,70 @@ function generateIntroThemes(profile: UserProfile): string[] {
   return uniqueStrings(themes).slice(0, 5);
 }
 
+function clampValue(value: number, min: number, max: number): number {
+  return Math.min(Math.max(value, min), max);
+}
+
 function calculateMacros(profile: UserProfile): { protein: number; carbs: number; fats: number; fiber: number; hydration: string } {
   const blend = getDoshaBlend(profile);
-  const doshaMacros = doshaData[blend.primary].macros;
-  const mbtiMacros = mbtiData[profile.mbti].macros;
-  const zodiacMacros = westernZodiacData[profile.westernZodiac].macros;
-  const chineseMacros = chineseElementMacros[chineseZodiacData[profile.chineseZodiac].element];
-  const weightedMacros: Array<{ weight: number; macros: MacroProfile }> = [
-    { weight: 0.3, macros: doshaMacros },
-    { weight: 0.15, macros: mbtiMacros },
-    { weight: 0.15, macros: zodiacMacros },
-    { weight: 0.1, macros: chineseMacros }
-  ];
+  const age = getAgeFromBirthDate(profile.birthDate);
 
-  if (profile.bloodType) {
-    weightedMacros.push(
-      { weight: 0.2, macros: bloodTypeData[profile.bloodType].macros },
-      { weight: 0.1, macros: koreanStyleMacros[profile.bloodType] },
-    );
+  // Protein share rises with age (muscle maintenance needs it); the profile's
+  // other layers only nudge within accepted macro-distribution bounds.
+  let protein = age < 30 ? 22 : age < 50 ? 24 : age < 65 ? 26 : 28;
+  let fats = 30;
+
+  const doshaProteinNudge = { vata: -1, pitta: 0, kapha: 2 }[blend.primary];
+  const doshaFatNudge = { vata: 1, pitta: 0, kapha: -2 }[blend.primary];
+  protein += doshaProteinNudge;
+  fats += doshaFatNudge;
+
+  if (profile.bloodType === 'O') {
+    protein += 1;
+  } else if (profile.bloodType === 'A') {
+    protein -= 1;
   }
 
-  const totalWeight = weightedMacros.reduce((sum, entry) => sum + entry.weight, 0);
-  const protein = weightedMacros.reduce((sum, entry) => sum + entry.macros.protein * (entry.weight / totalWeight), 0);
-  const carbs = weightedMacros.reduce((sum, entry) => sum + entry.macros.carbs * (entry.weight / totalWeight), 0);
-  const fats = weightedMacros.reduce((sum, entry) => sum + entry.macros.fats * (entry.weight / totalWeight), 0);
+  if (westernZodiacData[profile.westernZodiac].element === 'fire') {
+    protein += 1;
+  }
 
-  const rounded = {
-    protein: Math.round(protein),
-    carbs: Math.round(carbs),
-    fats: Math.round(fats)
-  };
+  protein = clampValue(protein, 18, 30);
+  fats = clampValue(fats, 25, 33);
+  const carbs = 100 - protein - fats;
 
-  const total = rounded.protein + rounded.carbs + rounded.fats;
-  rounded.carbs += 100 - total;
-
-  const fiberBase = {
-    vata: 28,
-    pitta: 32,
-    kapha: 35
+  // Fiber lands in the recommended 25-38 g band, easing slightly with age.
+  const fiberBase = age < 50 ? 30 : 28;
+  const fiberAdjustment = {
+    vata: -2,
+    pitta: 0,
+    kapha: 2
   }[blend.primary];
 
-  const fiberAdjustment = {
-    vata: -1,
-    pitta: 1,
-    kapha: 2
-  }[blend.secondary];
-
+  // Volumes track adequate-intake guidance; the dosha layer decides the
+  // temperature and garnish, not the amount.
   const hydrationMap = {
     vata: {
-      vata: '2.7-3 L warm water + calming teas',
-      pitta: '2.6-3 L warm water, mint, or fennel',
-      kapha: '2.5-2.8 L warm water + gentle spice'
+      vata: '2-2.5 L, mostly warm water + calming teas',
+      pitta: '2-2.5 L warm water, mint, or fennel',
+      kapha: '2-2.5 L warm water + gentle spice'
     },
     pitta: {
-      vata: '2.5-2.8 L cooling herbs + steady sips',
-      pitta: '2.3-2.7 L cucumber, mint, or aloe',
-      kapha: '2.3-2.6 L cooling water, lighter evenings'
+      vata: '2-2.5 L cool water + steady sips',
+      pitta: '2-2.5 L with cucumber, mint, or citrus',
+      kapha: '2-2.4 L cool water, lighter evenings'
     },
     kapha: {
-      vata: '2.2-2.5 L warm water, regular sips',
-      pitta: '2.2-2.5 L ginger-fennel or coriander tea',
+      vata: '2-2.4 L warm water, regular sips',
+      pitta: '2-2.4 L ginger-fennel or coriander tea',
       kapha: '2-2.4 L warm water + herbal teas'
     }
   } as const;
 
   return {
-    protein: rounded.protein,
-    carbs: rounded.carbs,
-    fats: rounded.fats,
+    protein,
+    carbs,
+    fats,
     fiber: fiberBase + fiberAdjustment,
     hydration: hydrationMap[blend.primary][blend.secondary]
   };
@@ -524,16 +624,26 @@ function generateIngredientsToPrioritize(profile: UserProfile): string[] {
   const avoidSet = buildAvoidSet(profile);
   const scored = new Map<string, ScoredLabel<IngredientSource>>();
 
-  addScoredLabels(scored, doshaData[blend.primary].foods.favor, 4.8, 'dosha');
-  addScoredLabels(scored, doshaData[blend.secondary].foods.favor, 2.2, 'secondary-dosha');
+  // Self-reported signals (the dosha quiz) carry the most weight; birth-derived
+  // layers stay in the mix as flavor rather than as drivers.
+  addScoredLabels(scored, doshaData[blend.primary].foods.favor, 4.2, 'dosha');
+  addScoredLabels(scored, doshaData[blend.secondary].foods.favor, 2.0, 'secondary-dosha');
   if (profile.bloodType) {
-    addScoredLabels(scored, bloodTypeData[profile.bloodType].foods.highlyBeneficial, 4.2, 'blood');
+    addScoredLabels(scored, bloodTypeData[profile.bloodType].foods.highlyBeneficial, 1.6, 'blood');
   }
-  addScoredLabels(scored, mbtiData[profile.mbti].recommendedFoods, 2.5, 'mbti');
-  addScoredLabels(scored, westernZodiacData[profile.westernZodiac].foods.recommended, 2.8, 'zodiac');
-  addScoredLabels(scored, chineseZodiacData[profile.chineseZodiac].foods.recommended, 2.4, 'chinese');
+  addScoredLabels(scored, mbtiData[profile.mbti].recommendedFoods, 1.4, 'mbti');
+  addScoredLabels(scored, westernZodiacData[profile.westernZodiac].foods.recommended, 1.6, 'zodiac');
+  addScoredLabels(scored, chineseZodiacData[profile.chineseZodiac].foods.recommended, 1.4, 'chinese');
   addScoredLabels(scored, doshaData[blend.primary].spices, 3.1, 'spice');
   addScoredLabels(scored, doshaData[blend.secondary].spices, 1.6, 'spice');
+
+  for (const entry of scored.values()) {
+    if (matchesAnyPattern(entry.label, limitFoodPatterns)) {
+      entry.score -= 4;
+    } else if (matchesAnyPattern(entry.label, alignedFoodPatterns)) {
+      entry.score += 3.2;
+    }
+  }
 
   const ranked = rankLabels(scored, seed, 'priority-ingredients', avoidSet).filter(entry => entry.concrete);
   const selected = new Set<string>();
@@ -559,15 +669,23 @@ function generateFoodsToAvoid(profile: UserProfile): string[] {
   const { primary, secondary } = getDoshaBlend(profile);
   const scored = new Map<string, ScoredLabel<AvoidSource>>();
 
-  addScoredLabels(scored, doshaData[primary].foods.avoid, 4.5, 'dosha-avoid');
+  addScoredLabels(scored, doshaData[primary].foods.avoid, 4.0, 'dosha-avoid');
   addScoredLabels(scored, doshaData[primary].foods.reduce, 2.6, 'dosha-reduce');
   addScoredLabels(scored, doshaData[secondary].foods.avoid, 2.2, 'secondary-avoid');
   if (profile.bloodType) {
-    addScoredLabels(scored, bloodTypeData[profile.bloodType].foods.avoid, 4.1, 'blood');
+    addScoredLabels(scored, bloodTypeData[profile.bloodType].foods.avoid, 1.2, 'blood');
   }
-  addScoredLabels(scored, mbtiData[profile.mbti].foodsToLimit, 3.1, 'mbti');
-  addScoredLabels(scored, westernZodiacData[profile.westernZodiac].foods.limit, 2.6, 'zodiac');
-  addScoredLabels(scored, chineseZodiacData[profile.chineseZodiac].foods.limit, 2.4, 'chinese');
+  addScoredLabels(scored, mbtiData[profile.mbti].foodsToLimit, 1.8, 'mbti');
+  addScoredLabels(scored, westernZodiacData[profile.westernZodiac].foods.limit, 1.6, 'zodiac');
+  addScoredLabels(scored, chineseZodiacData[profile.chineseZodiac].foods.limit, 1.4, 'chinese');
+
+  for (const [key, entry] of scored) {
+    if (matchesAnyPattern(entry.label, limitFoodPatterns)) {
+      entry.score += 3;
+    } else if (matchesAnyPattern(entry.label, protectedFoodPatterns)) {
+      scored.delete(key);
+    }
+  }
 
   const ranked = rankLabels(scored, seed, 'foods-to-avoid');
   const selected = new Set<string>();
@@ -600,11 +718,24 @@ function generateMealRhythm(profile: UserProfile): string {
       ? 'Repeatable meal windows will help your energy feel stable instead of negotiable.'
       : 'Leave one meal window flexible so appetite, curiosity, or schedule can steer the details without breaking the plan.';
 
-  const accentRhythm = {
-    vata: 'A warm snack or soup in late afternoon helps prevent scatter and skipped dinners.',
-    pitta: 'Lean on crisp herbs, watery produce, or a calmer evening plate when heat starts building.',
-    kapha: 'Use spice, bitterness, and lighter textures whenever meals start feeling too dense or sleepy.'
-  }[secondary];
+  // When the chronotype is known it replaces the accent line — the body clock
+  // is the most reliable signal in the whole profile.
+  const chronotypeRhythm = profile.chronotype
+    ? {
+        lion: 'Your energy crests early, so let breakfast and lunch carry the day and keep dinner your smallest plate.',
+        bear: 'Give lunch the weight of a real meal, and keep weekend timing close to weekday timing so the rhythm holds itself.',
+        wolf: 'Your evenings run long, so choose a gentle kitchen-closed hour before bed and step into bright light soon after waking.',
+        dolphin: 'With sleep this light, keep caffeine to the early hours and hold a steady wake time even after a restless night.'
+      }[profile.chronotype]
+    : null;
+
+  const accentRhythm =
+    chronotypeRhythm ??
+    {
+      vata: 'A warm snack or soup in late afternoon helps prevent scatter and skipped dinners.',
+      pitta: 'Lean on crisp herbs, watery produce, or a calmer evening plate when heat starts building.',
+      kapha: 'Use spice, bitterness, and lighter textures whenever meals start feeling too dense or sleepy.'
+    }[secondary];
 
   const socialRhythm =
     profile.mbti[0] === 'E'
@@ -671,9 +802,11 @@ function generateRituals(profile: UserProfile, ingredients: string[]): string[] 
     pitta: 'When intensity rises, lower the heat, acidity, and speed of the meal before adding more stimulation.',
     kapha: 'When heaviness builds, cut portion size slightly and add more spice, crunch, or bitterness.'
   }[blend.secondary];
+  const walkRitual =
+    'Follow your largest meal with ten unhurried minutes of walking — it settles digestion and softens the afternoon dip.';
   const movementRitual = profile.bloodType
-    ? `Pair your main meal with ${pickDeterministic(bloodTypeData[profile.bloodType].exercise, seed, 'exercise').toLowerCase()} or another short movement block later in the day.`
-    : 'Pair your main meal with a short walk, mobility block, or easy strength session so energy and digestion stay in sync.';
+    ? `${walkRitual} For fuller movement, ${pickDeterministic(bloodTypeData[profile.bloodType].exercise, seed, 'exercise').toLowerCase()} suits your temperament.`
+    : `${walkRitual} Add a strength or mobility block somewhere in the week so energy and appetite stay in sync.`;
 
   return [
     morningStart,
